@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(venvScripts:*)",
+      "Bash(pip install:*)",
+      "Bash(.venvScriptsactivate)",
+      "Bash(venv/Scripts/pip install:*)",
+      "Bash(echo $APPDATA)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(playwright-mcp:*)",
+      "Bash(browser-tools-mcp:*)",
+      "Bash(npm install:*)",
+      "Bash(npm search:*)",
+      "Bash(context7-mcp:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
