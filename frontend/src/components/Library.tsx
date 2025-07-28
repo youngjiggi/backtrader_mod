@@ -1,0 +1,595 @@
+import React, { useState } from 'react';
+import { Search, Filter, ArrowLeft, TrendingUp, Target, BarChart3 } from 'lucide-react';
+import ViewToggle from './ViewToggle';
+import FilterModal, { FilterOptions } from './FilterModal';
+import SortableHeader from './SortableHeader';
+
+interface BacktestData {
+  id: string;
+  name: string;
+  version: string;
+  date: string;
+  symbol: string;
+  timeframe: string;
+  winRate: number;
+  sharpe: number;
+  totalReturn: number;
+  maxDrawdown: number;
+  isUnread: boolean;
+  keynote: string;
+}
+
+interface LibraryProps {
+  onBack: () => void;
+  onCompareSelected?: (selectedIds: string[]) => void;
+}
+
+const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
+  const [view, setView] = useState<'list' | 'thumbnail'>('list');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterTimeframe, setFilterTimeframe] = useState('all');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: 'asc' | 'desc' | null;
+  }>({ key: '', direction: null });
+  
+  const [advancedFilters, setAdvancedFilters] = useState<FilterOptions>({
+    dateRange: { start: '', end: '' },
+    winRateMin: 0,
+    sharpeMin: 0,
+    returnMin: -100,
+    symbols: [],
+    timeframes: []
+  });
+
+  // Sample data
+  const backtests: BacktestData[] = [
+    {
+      id: '1',
+      name: 'ATR Breakout Strategy',
+      version: 'v2.1',
+      date: '2025-01-25',
+      symbol: 'AAPL',
+      timeframe: '1d',
+      winRate: 68.4,
+      sharpe: 1.84,
+      totalReturn: 24.7,
+      maxDrawdown: -8.2,
+      isUnread: true,
+      keynote: 'Strong performance in trending markets with improved exit signals'
+    },
+    {
+      id: '2',
+      name: 'RSI Divergence',
+      version: 'v1.3',
+      date: '2025-01-24',
+      symbol: 'TSLA',
+      timeframe: '4h',
+      winRate: 72.1,
+      sharpe: 2.12,
+      totalReturn: 31.2,
+      maxDrawdown: -12.4,
+      isUnread: false,
+      keynote: 'Excellent reversal detection, needs volume confirmation'
+    },
+    {
+      id: '3',
+      name: 'Moving Average Cross',
+      version: 'v3.0',
+      date: '2025-01-23',
+      symbol: 'SPY',
+      timeframe: '1d',
+      winRate: 58.9,
+      sharpe: 1.45,
+      totalReturn: 18.3,
+      maxDrawdown: -6.8,
+      isUnread: true,
+      keynote: 'Stable returns with low drawdown, good for risk-averse strategies'
+    },
+    {
+      id: '4',
+      name: 'Phase Reversal Detection',
+      version: 'v1.0',
+      date: '2025-01-22',
+      symbol: 'QQQ',
+      timeframe: '1h',
+      winRate: 64.7,
+      sharpe: 1.67,
+      totalReturn: 22.1,
+      maxDrawdown: -9.5,
+      isUnread: false,
+      keynote: 'Promising early results, requires more testing on different market conditions'
+    },
+    {
+      id: '5',
+      name: 'CVD Momentum Strategy',
+      version: 'v2.5',
+      date: '2025-01-21',
+      symbol: 'BTC',
+      timeframe: '15m',
+      winRate: 61.3,
+      sharpe: 1.92,
+      totalReturn: 28.4,
+      maxDrawdown: -15.2,
+      isUnread: false,
+      keynote: 'High volatility strategy, works well in crypto markets'
+    }
+  ];
+
+  // Helper functions
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' | null = 'asc';
+    
+    if (sortConfig.key === key) {
+      if (sortConfig.direction === 'asc') {
+        direction = 'desc';
+      } else if (sortConfig.direction === 'desc') {
+        direction = null;
+      }
+    }
+    
+    setSortConfig({ key, direction });
+  };
+
+  const handleSelectItem = (id: string) => {
+    setSelectedItems(prev => 
+      prev.includes(id) 
+        ? prev.filter(item => item !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.length === filteredBacktests.length) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(filteredBacktests.map(item => item.id));
+    }
+  };
+
+  const applyAdvancedFilters = (backtest: BacktestData) => {
+    // Date range filter
+    if (advancedFilters.dateRange.start && new Date(backtest.date) < new Date(advancedFilters.dateRange.start)) {
+      return false;
+    }
+    if (advancedFilters.dateRange.end && new Date(backtest.date) > new Date(advancedFilters.dateRange.end)) {
+      return false;
+    }
+    
+    // Performance filters
+    if (backtest.winRate < advancedFilters.winRateMin) return false;
+    if (backtest.sharpe < advancedFilters.sharpeMin) return false;
+    if (backtest.totalReturn < advancedFilters.returnMin) return false;
+    
+    // Timeframe filter
+    if (advancedFilters.timeframes.length > 0 && !advancedFilters.timeframes.includes(backtest.timeframe)) {
+      return false;
+    }
+    
+    return true;
+  };
+
+  const filteredBacktests = backtests.filter(backtest => {
+    const matchesSearch = backtest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         backtest.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         backtest.keynote.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesTimeframe = filterTimeframe === 'all' || backtest.timeframe === filterTimeframe;
+    const matchesAdvancedFilters = applyAdvancedFilters(backtest);
+    
+    return matchesSearch && matchesTimeframe && matchesAdvancedFilters;
+  });
+
+  // Apply sorting
+  const sortedBacktests = [...filteredBacktests].sort((a, b) => {
+    if (!sortConfig.direction) return 0;
+    
+    let aValue: any = a[sortConfig.key as keyof BacktestData];
+    let bValue: any = b[sortConfig.key as keyof BacktestData];
+    
+    // Handle different data types
+    if (sortConfig.key === 'date') {
+      aValue = new Date(aValue);
+      bValue = new Date(bValue);
+    } else if (typeof aValue === 'string') {
+      aValue = aValue.toLowerCase();
+      bValue = bValue.toLowerCase();
+    }
+    
+    if (aValue < bValue) {
+      return sortConfig.direction === 'asc' ? -1 : 1;
+    }
+    if (aValue > bValue) {
+      return sortConfig.direction === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const ListView = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
+            <th className="w-12 py-3 px-4">
+              <input
+                type="checkbox"
+                checked={selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0}
+                onChange={handleSelectAll}
+                className="rounded"
+                style={{ accentColor: 'var(--accent)' }}
+              />
+            </th>
+            <SortableHeader
+              sortKey="name"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Strategy Name
+            </SortableHeader>
+            <SortableHeader
+              sortKey="symbol"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Symbol
+            </SortableHeader>
+            <SortableHeader
+              sortKey="date"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Date
+            </SortableHeader>
+            <SortableHeader
+              sortKey="winRate"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Win Rate
+            </SortableHeader>
+            <SortableHeader
+              sortKey="sharpe"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Sharpe
+            </SortableHeader>
+            <SortableHeader
+              sortKey="totalReturn"
+              currentSort={sortConfig}
+              onSort={handleSort}
+            >
+              Return
+            </SortableHeader>
+            <th className="text-left py-3 px-4 font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Keynote
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedBacktests.map((backtest) => (
+            <tr
+              key={backtest.id}
+              className={`border-b hover:bg-opacity-50 transition-colors ${
+                selectedItems.includes(backtest.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+              }`}
+              style={{ borderColor: 'var(--border)' }}
+            >
+              <td className="py-4 px-4">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(backtest.id)}
+                  onChange={() => handleSelectItem(backtest.id)}
+                  className="rounded"
+                  style={{ accentColor: 'var(--accent)' }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </td>
+              <td className="py-4 px-4 cursor-pointer">
+                <div className="flex items-center space-x-3">
+                  {backtest.isUnread && (
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: 'var(--accent)' }}
+                      title="Unread"
+                    />
+                  )}
+                  <div>
+                    <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {backtest.name}
+                    </div>
+                    <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {backtest.version}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="py-4 px-4">
+                <span className="font-mono text-sm" style={{ color: 'var(--text-primary)' }}>
+                  {backtest.symbol}
+                </span>
+                <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {backtest.timeframe}
+                </div>
+              </td>
+              <td className="py-4 px-4 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {new Date(backtest.date).toLocaleDateString()}
+              </td>
+              <td className="py-4 px-4">
+                <span style={{ color: 'var(--highlight)' }}>
+                  {backtest.winRate.toFixed(1)}%
+                </span>
+              </td>
+              <td className="py-4 px-4">
+                <span style={{ color: 'var(--highlight)' }}>
+                  {backtest.sharpe.toFixed(2)}
+                </span>
+              </td>
+              <td className="py-4 px-4">
+                <span className={backtest.totalReturn > 0 ? 'text-green-500' : 'text-red-500'}>
+                  {backtest.totalReturn > 0 ? '+' : ''}{backtest.totalReturn.toFixed(1)}%
+                </span>
+              </td>
+              <td className="py-4 px-4 max-w-xs">
+                <p className="text-sm truncate" style={{ color: 'var(--text-secondary)' }} title={backtest.keynote}>
+                  {backtest.keynote}
+                </p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const ThumbnailView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {sortedBacktests.map((backtest) => (
+        <div
+          key={backtest.id}
+          className={`border rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer ${
+            selectedItems.includes(backtest.id) ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
+          }`}
+          style={{
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)'
+          }}
+          onClick={() => handleSelectItem(backtest.id)}
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <div className="flex items-center space-x-2 mb-1">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.includes(backtest.id)}
+                  onChange={() => handleSelectItem(backtest.id)}
+                  className="rounded"
+                  style={{ accentColor: 'var(--accent)' }}
+                  onClick={(e) => e.stopPropagation()}
+                />
+                {backtest.isUnread && (
+                  <span
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: 'var(--accent)' }}
+                    title="Unread"
+                  />
+                )}
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {backtest.name}
+                </h3>
+              </div>
+              <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                {backtest.version} • {backtest.symbol} • {backtest.timeframe}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                {new Date(backtest.date).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Mini Chart Placeholder */}
+          <div
+            className="h-20 rounded border mb-4 flex items-center justify-center"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border)'
+            }}
+          >
+            <BarChart3 size={24} style={{ color: 'var(--highlight)' }} />
+          </div>
+
+          {/* Key Metrics */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="flex items-center space-x-2">
+              <Target size={14} style={{ color: 'var(--highlight)' }} />
+              <div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Win Rate</div>
+                <div className="font-medium" style={{ color: 'var(--highlight)' }}>
+                  {backtest.winRate.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <TrendingUp size={14} style={{ color: 'var(--highlight)' }} />
+              <div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Return</div>
+                <div className={`font-medium ${backtest.totalReturn > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {backtest.totalReturn > 0 ? '+' : ''}{backtest.totalReturn.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <BarChart3 size={14} style={{ color: 'var(--highlight)' }} />
+              <div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sharpe</div>
+                <div className="font-medium" style={{ color: 'var(--highlight)' }}>
+                  {backtest.sharpe.toFixed(2)}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3.5 h-3.5 rounded-full bg-red-500 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
+              </div>
+              <div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Max DD</div>
+                <div className="font-medium text-red-500">
+                  {backtest.maxDrawdown.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Keynote */}
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {backtest.keynote}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      {/* Header */}
+      <div
+        className="border-b px-6 py-4"
+        style={{
+          backgroundColor: 'var(--surface)',
+          borderColor: 'var(--border)'
+        }}
+      >
+        <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={onBack}
+              className="p-2 rounded-lg border transition-colors hover:bg-opacity-80"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              Backtest Library
+            </h1>
+          </div>
+          <ViewToggle view={view} onViewChange={setView} />
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2"
+              size={20}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search strategies, symbols, keynotes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-colors"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)',
+                '--tw-ring-color': 'var(--accent)'
+              }}
+            />
+          </div>
+
+          {/* Filters */}
+          <div className="flex items-center space-x-4">
+            <select
+              value={filterTimeframe}
+              onChange={(e) => setFilterTimeframe(e.target.value)}
+              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)',
+                '--tw-ring-color': 'var(--accent)'
+              }}
+            >
+              <option value="all">All Timeframes</option>
+              <option value="15m">15 Minutes</option>
+              <option value="1h">1 Hour</option>
+              <option value="4h">4 Hours</option>
+              <option value="1d">1 Day</option>
+            </select>
+
+            <button
+              onClick={() => setIsFilterModalOpen(true)}
+              className="flex items-center space-x-2 px-3 py-2 border rounded-lg transition-colors hover:bg-opacity-80"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              <Filter size={16} />
+              <span>Filters</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Results Count and Compare Button */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Showing {sortedBacktests.length} of {backtests.length} strategies
+          </p>
+          
+          {selectedItems.length > 0 && (
+            <button
+              className="px-4 py-2 rounded-lg font-medium transition-colors"
+              style={{
+                backgroundColor: 'var(--accent)',
+                color: 'var(--bg-primary)'
+              }}
+              onClick={() => {
+                if (onCompareSelected) {
+                  onCompareSelected(selectedItems);
+                } else {
+                  console.log('Compare selected items:', selectedItems);
+                }
+              }}
+            >
+              Compare Selected ({selectedItems.length})
+            </button>
+          )}
+        </div>
+
+        {/* Content */}
+        <div
+          className="rounded-lg border"
+          style={{
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)'
+          }}
+        >
+          <div className="p-6">
+            {view === 'list' ? <ListView /> : <ThumbnailView />}
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Modal */}
+      <FilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApplyFilters={setAdvancedFilters}
+        currentFilters={advancedFilters}
+      />
+    </div>
+  );
+};
+
+export default Library;
