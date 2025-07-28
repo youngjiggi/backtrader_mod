@@ -8,11 +8,12 @@ interface NewBacktestModalProps {
   isOpen: boolean;
   onClose: () => void;
   onBacktestStarted?: (backtestId: string) => void;
+  onManageWatchlists?: () => void;
 }
 
 type SubmissionState = 'idle' | 'submitting' | 'success' | 'error';
 
-const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, onBacktestStarted }) => {
+const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, onBacktestStarted, onManageWatchlists }) => {
   const { addStrategy } = useStrategy();
   const [currentStep, setCurrentStep] = useState(1);
   const [submissionState, setSubmissionState] = useState<SubmissionState>('idle');
@@ -217,7 +218,10 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                     or
                   </span>
-                  <WatchlistSelector onSymbolsSelected={handleWatchlistLoad} />
+                  <WatchlistSelector 
+                    onSymbolsSelected={handleWatchlistLoad}
+                    onManageWatchlists={onManageWatchlists}
+                  />
                 </div>
 
                 {/* Selected Symbols */}

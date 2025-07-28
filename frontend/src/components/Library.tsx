@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowLeft, TrendingUp, Target, BarChart3 } from 'lucide-react';
+import { Search, Filter, TrendingUp, Target, BarChart3 } from 'lucide-react';
 import ViewToggle from './ViewToggle';
 import FilterModal, { FilterOptions } from './FilterModal';
 import SortableHeader from './SortableHeader';
@@ -22,11 +22,13 @@ interface BacktestData {
 interface LibraryProps {
   onBack: () => void;
   onCompareSelected?: (selectedIds: string[]) => void;
+  onReportOpen?: (backtest: BacktestData) => void;
+  initialSearchTerm?: string;
 }
 
-const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
+const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, initialSearchTerm }) => {
   const [view, setView] = useState<'list' | 'thumbnail'>('list');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
   const [filterTimeframe, setFilterTimeframe] = useState('all');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -150,21 +152,36 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
   };
 
   const applyAdvancedFilters = (backtest: BacktestData) => {
+    // Debug advanced filters
+    console.log('Advanced filters:', advancedFilters);
+    
     // Date range filter
     if (advancedFilters.dateRange.start && new Date(backtest.date) < new Date(advancedFilters.dateRange.start)) {
+      console.log(`${backtest.name} filtered out by start date`);
       return false;
     }
     if (advancedFilters.dateRange.end && new Date(backtest.date) > new Date(advancedFilters.dateRange.end)) {
+      console.log(`${backtest.name} filtered out by end date`);
       return false;
     }
     
     // Performance filters
-    if (backtest.winRate < advancedFilters.winRateMin) return false;
-    if (backtest.sharpe < advancedFilters.sharpeMin) return false;
-    if (backtest.totalReturn < advancedFilters.returnMin) return false;
+    if (backtest.winRate < advancedFilters.winRateMin) {
+      console.log(`${backtest.name} filtered out by winRate: ${backtest.winRate} < ${advancedFilters.winRateMin}`);
+      return false;
+    }
+    if (backtest.sharpe < advancedFilters.sharpeMin) {
+      console.log(`${backtest.name} filtered out by sharpe: ${backtest.sharpe} < ${advancedFilters.sharpeMin}`);
+      return false;
+    }
+    if (backtest.totalReturn < advancedFilters.returnMin) {
+      console.log(`${backtest.name} filtered out by return: ${backtest.totalReturn} < ${advancedFilters.returnMin}`);
+      return false;
+    }
     
     // Timeframe filter
     if (advancedFilters.timeframes.length > 0 && !advancedFilters.timeframes.includes(backtest.timeframe)) {
+      console.log(`${backtest.name} filtered out by timeframes`);
       return false;
     }
     
@@ -177,6 +194,12 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
                          backtest.keynote.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTimeframe = filterTimeframe === 'all' || backtest.timeframe === filterTimeframe;
     const matchesAdvancedFilters = applyAdvancedFilters(backtest);
+    
+    // Debug logging
+    if (searchTerm) {
+      console.log(`Search term: "${searchTerm}"`);
+      console.log(`Backtest: ${backtest.name} - matches search: ${matchesSearch}, matches timeframe: ${matchesTimeframe}, matches advanced: ${matchesAdvancedFilters}`);
+    }
     
     return matchesSearch && matchesTimeframe && matchesAdvancedFilters;
   });
@@ -271,10 +294,11 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
           {sortedBacktests.map((backtest) => (
             <tr
               key={backtest.id}
-              className={`border-b hover:bg-opacity-50 transition-colors ${
+              className={`border-b hover:bg-opacity-50 transition-colors cursor-pointer ${
                 selectedItems.includes(backtest.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
               }`}
               style={{ borderColor: 'var(--border)' }}
+              onClick={() => onReportOpen && onReportOpen(backtest)}
             >
               <td className="py-4 px-4">
                 <input
@@ -355,7 +379,7 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
             backgroundColor: 'var(--surface)',
             borderColor: 'var(--border)'
           }}
-          onClick={() => handleSelectItem(backtest.id)}
+          onClick={() => onReportOpen && onReportOpen(backtest)}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
@@ -452,37 +476,17 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {/* Header */}
-      <div
-        className="border-b px-6 py-4"
-        style={{
-          backgroundColor: 'var(--surface)',
-          borderColor: 'var(--border)'
-        }}
-      >
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={onBack}
-              className="p-2 rounded-lg border transition-colors hover:bg-opacity-80"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)'
-              }}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Backtest Library
-            </h1>
-          </div>
+      {/* Controls */}
+      <div className="px-6 pt-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Backtest Library
+          </h2>
           <ViewToggle view={view} onViewChange={setView} />
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="px-6 pb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
           {/* Search */}
           <div className="relative flex-1 max-w-md">
@@ -495,7 +499,10 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
               type="text"
               placeholder="Search strategies, symbols, keynotes..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                console.log('Search input changed to:', e.target.value);
+                setSearchTerm(e.target.value);
+              }}
               className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-colors"
               style={{
                 backgroundColor: 'var(--surface)',
@@ -545,6 +552,11 @@ const Library: React.FC<LibraryProps> = ({ onBack, onCompareSelected }) => {
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
             Showing {sortedBacktests.length} of {backtests.length} strategies
+            {searchTerm && (
+              <span style={{ color: 'var(--accent)' }}>
+                {' '}(searching for: "{searchTerm}")
+              </span>
+            )}
           </p>
           
           {selectedItems.length > 0 && (

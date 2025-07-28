@@ -3,7 +3,7 @@ import Header from './Header';
 import CollapsibleSection from './CollapsibleSection';
 import MetricsCards from './MetricsCards';
 import NewBacktestModal from './NewBacktestModal';
-import { BarChart3, Library, Plus, X, Clock, Play, Search } from 'lucide-react';
+import { BarChart3, Library, Plus, X, Clock, Play, Search, List } from 'lucide-react';
 
 interface BacktestReportData {
   id: string;
@@ -40,7 +40,8 @@ interface BacktestReportData {
 }
 
 interface DashboardProps {
-  onNavigateToLibrary: () => void;
+  onNavigateToLibrary: (searchTerm?: string) => void;
+  onNavigateToWatchlistManagement?: () => void;
   onNavigateToStrategies?: () => void;
   onNavigateToReport?: (backtest: BacktestReportData) => void;
   onNavigateToSignIn?: () => void;
@@ -56,7 +57,7 @@ interface RunningBacktest {
   status: 'running' | 'completed' | 'failed';
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToStrategies, onNavigateToReport, onNavigateToSignIn }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToSignIn }) => {
   const [isNewBacktestModalOpen, setIsNewBacktestModalOpen] = useState(false);
   const [runningBacktests, setRunningBacktests] = useState<RunningBacktest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -208,8 +209,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Searching for:', searchQuery);
-    // TODO: Implement search functionality
+    if (searchQuery.trim()) {
+      console.log('Navigating to library with search:', searchQuery);
+      onNavigateToLibrary(searchQuery.trim());
+    } else {
+      onNavigateToLibrary();
+    }
   };
 
   return (
@@ -292,7 +297,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
             New Backtest
           </button>
           <button
-            onClick={onNavigateToLibrary}
+            onClick={() => onNavigateToLibrary()}
             className="px-6 py-3 rounded-lg border font-medium transition-colors duration-200 hover:bg-opacity-80"
             style={{
               borderColor: 'var(--border)',
@@ -302,6 +307,18 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
           >
             <Library className="inline mr-2" size={20} />
             View Library
+          </button>
+          <button
+            onClick={onNavigateToWatchlistManagement}
+            className="px-6 py-3 rounded-lg border font-medium transition-colors duration-200 hover:bg-opacity-80"
+            style={{
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)',
+              backgroundColor: 'var(--surface)'
+            }}
+          >
+            <List className="inline mr-2" size={20} />
+            Manage Watchlists
           </button>
         </div>
 
@@ -493,6 +510,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
         isOpen={isNewBacktestModalOpen}
         onClose={() => setIsNewBacktestModalOpen(false)}
         onBacktestStarted={handleBacktestStarted}
+        onManageWatchlists={onNavigateToWatchlistManagement}
       />
     </div>
   );

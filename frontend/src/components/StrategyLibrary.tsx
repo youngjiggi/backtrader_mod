@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Play, Edit, Trash2, Plus, Save, Calendar, Settings } from 'lucide-react';
 import { useStrategy, StrategyTemplate } from '../contexts/StrategyContext';
 import Modal from './Modal';
+import StrategyFormModal from './StrategyFormModal';
 
 interface StrategyLibraryProps {
   onBack: () => void;
@@ -9,10 +10,12 @@ interface StrategyLibraryProps {
 }
 
 const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy }) => {
-  const { strategies, deleteStrategy } = useStrategy();
+  const { strategies, deleteStrategy, addStrategy } = useStrategy();
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyTemplate | null>(null);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
   const [runSymbol, setRunSymbol] = useState('');
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStrategy, setEditingStrategy] = useState<StrategyTemplate | null>(null);
 
   const handleRunStrategy = (strategy: StrategyTemplate) => {
     setSelectedStrategy(strategy);
@@ -32,6 +35,33 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
     if (confirm('Are you sure you want to delete this strategy?')) {
       deleteStrategy(id);
     }
+  };
+
+  const handleEditStrategy = (strategy: StrategyTemplate) => {
+    setEditingStrategy(strategy);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCreateStrategy = () => {
+    setEditingStrategy(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDuplicateStrategy = (strategy: StrategyTemplate) => {
+    const duplicate = {
+      name: `${strategy.name} (Copy)`,
+      description: strategy.description,
+      symbol: strategy.symbol,
+      timeframe: strategy.timeframe,
+      atrPeriod: strategy.atrPeriod,
+      atrMultiplier: strategy.atrMultiplier,
+      cvdThreshold: strategy.cvdThreshold,
+      profileBins: [...strategy.profileBins],
+      relativeVolume: strategy.relativeVolume,
+      atrTrim: strategy.atrTrim,
+      phaseId: strategy.phaseId
+    };
+    addStrategy(duplicate);
   };
 
   return (
@@ -63,6 +93,7 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
           </div>
           
           <button
+            onClick={handleCreateStrategy}
             className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors"
             style={{
               backgroundColor: 'var(--accent)',
@@ -99,7 +130,7 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
                 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => console.log('Edit strategy:', strategy.id)}
+                    onClick={() => handleEditStrategy(strategy)}
                     className="p-1 rounded hover:bg-opacity-80 transition-colors"
                     style={{ color: 'var(--text-secondary)' }}
                     title="Edit strategy"
@@ -209,14 +240,14 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
                   <span>Run</span>
                 </button>
                 <button
-                  onClick={() => console.log('Save copy:', strategy.id)}
+                  onClick={() => handleDuplicateStrategy(strategy)}
                   className="px-3 py-2 rounded-lg border transition-colors"
                   style={{
                     borderColor: 'var(--border)',
                     color: 'var(--text-primary)',
                     backgroundColor: 'var(--bg-primary)'
                   }}
-                  title="Save as new strategy"
+                  title="Duplicate strategy"
                 >
                   <Save size={16} />
                 </button>
@@ -300,6 +331,16 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
           </div>
         </div>
       </Modal>
+
+      {/* Strategy Form Modal */}
+      <StrategyFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingStrategy(null);
+        }}
+        editingStrategy={editingStrategy}
+      />
     </div>
   );
 };

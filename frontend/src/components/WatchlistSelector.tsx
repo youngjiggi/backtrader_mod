@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { List, ChevronDown, Plus } from 'lucide-react';
+import { List, ChevronDown, Plus, Settings } from 'lucide-react';
 import { useWatchlist, Watchlist } from '../contexts/WatchlistContext';
 import Modal from './Modal';
 
 interface WatchlistSelectorProps {
   onSymbolsSelected: (symbols: string[]) => void;
+  onManageWatchlists?: () => void;
 }
 
-const WatchlistSelector: React.FC<WatchlistSelectorProps> = ({ onSymbolsSelected }) => {
+const WatchlistSelector: React.FC<WatchlistSelectorProps> = ({ onSymbolsSelected, onManageWatchlists }) => {
   const { watchlists } = useWatchlist();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedWatchlist, setSelectedWatchlist] = useState<Watchlist | null>(null);
@@ -127,17 +128,37 @@ const WatchlistSelector: React.FC<WatchlistSelectorProps> = ({ onSymbolsSelected
           </div>
 
           <div className="flex justify-between pt-4">
-            <button
-              className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors"
-              style={{
-                borderColor: 'var(--border)',
-                color: 'var(--text-secondary)',
-                backgroundColor: 'var(--surface)'
-              }}
-            >
-              <Plus size={16} />
-              <span>Create New</span>
-            </button>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => {
+                  if (onManageWatchlists) {
+                    setIsModalOpen(false);
+                    onManageWatchlists();
+                  }
+                }}
+                className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors hover:bg-opacity-80"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'var(--surface)'
+                }}
+                disabled={!onManageWatchlists}
+              >
+                <Settings size={16} />
+                <span>Manage All</span>
+              </button>
+              <button
+                className="flex items-center space-x-2 px-4 py-2 border rounded-lg transition-colors"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'var(--surface)'
+                }}
+              >
+                <Plus size={16} />
+                <span>Create New</span>
+              </button>
+            </div>
             
             <div className="space-x-3">
               <button

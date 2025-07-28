@@ -3,13 +3,14 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
 import Dashboard from './components/Dashboard';
-import Library from './components/Library';
+import TabbedLibrary from './components/TabbedLibrary';
 import ComparisonScreen from './components/ComparisonScreen';
 import StrategyLibrary from './components/StrategyLibrary';
 import ReportScreen from './components/ReportScreen';
 import SignInScreen from './components/SignInScreen';
+import WatchlistManagement from './components/WatchlistManagement';
 
-type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'signin';
+type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'signin' | 'watchlists';
 
 interface BacktestData {
   id: string;
@@ -67,6 +68,7 @@ function App() {
   const [currentView, setCurrentView] = useState<CurrentView>('dashboard');
   const [selectedBacktestsForComparison, setSelectedBacktestsForComparison] = useState<BacktestData[]>([]);
   const [selectedBacktestForReport, setSelectedBacktestForReport] = useState<BacktestReportData | null>(null);
+  const [librarySearchTerm, setLibrarySearchTerm] = useState<string>('');
 
   // Sample data for comparison
   const sampleBacktests: BacktestData[] = [
@@ -151,18 +153,29 @@ function App() {
             onBack={() => setCurrentView('library')} 
           />
         );
+      case 'watchlists':
+        return (
+          <WatchlistManagement
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
       case 'library':
         return (
-          <Library 
+          <TabbedLibrary 
             onBack={() => setCurrentView('dashboard')}
             onCompareSelected={handleCompareSelected}
+            initialSearchTerm={librarySearchTerm}
           />
         );
       case 'dashboard':
       default:
         return (
           <Dashboard 
-            onNavigateToLibrary={() => setCurrentView('library')}
+            onNavigateToLibrary={(searchTerm?: string) => {
+              setLibrarySearchTerm(searchTerm || '');
+              setCurrentView('library');
+            }}
+            onNavigateToWatchlistManagement={() => setCurrentView('watchlists')}
             onNavigateToStrategies={() => setCurrentView('strategies')}
             onNavigateToReport={handleNavigateToReport}
             onNavigateToSignIn={handleNavigateToSignIn}
