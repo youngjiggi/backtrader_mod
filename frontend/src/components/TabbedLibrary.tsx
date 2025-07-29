@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, X, List, MoreHorizontal } from 'lucide-react';
 import Library from './Library';
 import ReportScreen from './ReportScreen';
+import { generateMockStageData } from '../utils/mockStageData';
 
 interface BacktestReportData {
   id: string;
@@ -34,6 +35,14 @@ interface BacktestReportData {
     equity: { date: string; value: number }[];
     drawdown: { date: string; value: number }[];
     trades: { date: string; type: 'entry' | 'exit'; price: number; size: number }[];
+    priceData: { date: string; open: number; high: number; low: number; close: number; volume: number }[];
+    movingAverage30W: { date: string; value: number }[];
+    stageAnalysis: {
+      stages: { date: string; stage: 1 | 2 | 3 | 4; sataScore: number }[];
+      relativeStrength: { date: string; value: number }[];
+      momentum: { date: string; value: number }[];
+      stageTransitions: { date: string; fromStage: 1 | 2 | 3 | 4; toStage: 1 | 2 | 3 | 4; trigger: string }[];
+    };
   };
 }
 
@@ -99,7 +108,8 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
     chartData: {
       equity: [],
       drawdown: [],
-      trades: []
+      trades: [],
+      ...generateMockStageData(libraryData.symbol, '2024-01-01', libraryData.date, 150)
     }
   });
 

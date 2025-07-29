@@ -72,7 +72,7 @@ All sections are vertical stack, newest at top; responsive grid for thumbnails o
 
 ### 3. New Run Screen
 
-Triggered from dashboard CTA; allows strategy setup and execution; upload optional, focus on simple data selection.
+Triggered from dashboard CTA; allows strategy setup and execution; upload optional for historical data, focus on simple selection.
 
 ### Layout:
 

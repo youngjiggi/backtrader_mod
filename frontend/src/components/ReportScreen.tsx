@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Download, BarChart3, TrendingUp, TrendingDown, Target, Calendar, Edit, Save } from 'lucide-react';
+import StageAnalysisChart from './StageAnalysisChart';
+import WeinsteinLegend from './WeinsteinLegend';
 
 interface BacktestReportData {
   id: string;
@@ -32,6 +34,14 @@ interface BacktestReportData {
     equity: { date: string; value: number }[];
     drawdown: { date: string; value: number }[];
     trades: { date: string; type: 'entry' | 'exit'; price: number; size: number }[];
+    priceData: { date: string; open: number; high: number; low: number; close: number; volume: number }[];
+    movingAverage30W: { date: string; value: number }[];
+    stageAnalysis: {
+      stages: { date: string; stage: 1 | 2 | 3 | 4; sataScore: number }[];
+      relativeStrength: { date: string; value: number }[];
+      momentum: { date: string; value: number }[];
+      stageTransitions: { date: string; fromStage: 1 | 2 | 3 | 4; toStage: 1 | 2 | 3 | 4; trigger: string }[];
+    };
   };
 }
 
@@ -44,6 +54,7 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
   const [selectedTimeframe, setSelectedTimeframe] = useState('1d');
   const [showBenchmark, setShowBenchmark] = useState(true);
   const [showLegend, setShowLegend] = useState(true);
+  const [showStageAnalysis, setShowStageAnalysis] = useState(true);
   const [keynote, setKeynote] = useState(backtest.keynote);
   const [isEditingKeynote, setIsEditingKeynote] = useState(false);
 
@@ -167,17 +178,17 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
                       Benchmark
                     </button>
                     <button
-                      onClick={() => setShowLegend(!showLegend)}
+                      onClick={() => setShowStageAnalysis(!showStageAnalysis)}
                       className={`px-3 py-1 rounded text-sm transition-colors ${
-                        showLegend ? 'font-medium' : ''
+                        showStageAnalysis ? 'font-medium' : ''
                       }`}
                       style={{
-                        backgroundColor: showLegend ? 'var(--accent)' : 'var(--surface)',
-                        color: showLegend ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                        backgroundColor: showStageAnalysis ? 'var(--accent)' : 'var(--surface)',
+                        color: showStageAnalysis ? 'var(--bg-primary)' : 'var(--text-secondary)',
                         border: `1px solid var(--border)`
                       }}
                     >
-                      Legend
+                      Stage Analysis
                     </button>
                   </div>
                 </div>
@@ -205,46 +216,58 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
 
               {/* Chart Area */}
               <div className="p-6">
-                <div
-                  className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center"
-                  style={{
-                    borderColor: 'var(--border)',
-                    minHeight: '400px'
-                  }}
-                >
-                  <BarChart3 size={64} className="mb-4" style={{ color: 'var(--highlight)' }} />
-                  <h3 className="text-xl font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Interactive Chart Area
-                  </h3>
-                  <p className="text-center mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Candlestick chart with entry/exit markers, volume profile overlays,<br/>
-                    phase detection zones, and benchmark comparison
-                  </p>
-                  <div className="flex space-x-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: 'var(--accent)' }}></div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Strategy Equity</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: 'var(--highlight)' }}></div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Buy & Hold</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded bg-green-500"></div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Entry Points</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-3 h-3 rounded bg-red-500"></div>
-                      <span style={{ color: 'var(--text-secondary)' }}>Exit Points</span>
-                    </div>
+                {showStageAnalysis ? (
+                  <StageAnalysisChart
+                    data={{
+                      priceData: backtest.chartData.priceData,
+                      movingAverage30W: backtest.chartData.movingAverage30W,
+                      stageAnalysis: backtest.chartData.stageAnalysis,
+                      trades: backtest.chartData.trades
+                    }}
+                    symbol={backtest.symbol}
+                    selectedTimeframe={selectedTimeframe}
+                    showBenchmark={showBenchmark}
+                  />
+                ) : (
+                  <div
+                    className="border-2 border-dashed rounded-lg flex flex-col items-center justify-center"
+                    style={{
+                      borderColor: 'var(--border)',
+                      minHeight: '400px'
+                    }}
+                  >
+                    <BarChart3 size={64} className="mb-4" style={{ color: 'var(--highlight)' }} />
+                    <h3 className="text-xl font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Standard Chart View
+                    </h3>
+                    <p className="text-center mb-4" style={{ color: 'var(--text-secondary)' }}>
+                      Basic candlestick chart with entry/exit markers<br/>
+                      and benchmark comparison
+                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
 
           {/* Right: Metrics Sidebar (30%) */}
           <div className="lg:col-span-3 space-y-6">
+            {/* Weinstein Stage Legend */}
+            {showStageAnalysis && (
+              <div
+                className="border rounded-lg p-6"
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}
+              >
+                <WeinsteinLegend
+                  isVisible={showLegend}
+                  onToggle={() => setShowLegend(!showLegend)}
+                />
+              </div>
+            )}
+
             {/* Performance Metrics */}
             <div
               className="border rounded-lg p-6"

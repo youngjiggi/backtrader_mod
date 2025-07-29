@@ -25,7 +25,11 @@
       "Bash(mkdir:*)",
       "Bash(cp:*)",
       "Bash(timeout 10s npm run dev)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "WebFetch(domain:www.backtrader.com)",
+      "WebFetch(domain:vectorbt.dev)",
+      "Bash(rmdir:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
