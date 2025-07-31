@@ -3,6 +3,8 @@ import { ArrowLeft, Play, Edit, Trash2, Plus, Save, Calendar, Settings } from 'l
 import { useStrategy, StrategyTemplate } from '../contexts/StrategyContext';
 import Modal from './Modal';
 import StrategyFormModal from './StrategyFormModal';
+import InlineEditableTitle from './InlineEditableTitle';
+import TagEditor from './TagEditor';
 
 interface StrategyLibraryProps {
   onBack: () => void;
@@ -10,7 +12,7 @@ interface StrategyLibraryProps {
 }
 
 const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy }) => {
-  const { strategies, deleteStrategy, addStrategy } = useStrategy();
+  const { strategies, deleteStrategy, addStrategy, updateStrategy } = useStrategy();
   const [selectedStrategy, setSelectedStrategy] = useState<StrategyTemplate | null>(null);
   const [isRunModalOpen, setIsRunModalOpen] = useState(false);
   const [runSymbol, setRunSymbol] = useState('');
@@ -45,6 +47,14 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
   const handleCreateStrategy = () => {
     setEditingStrategy(null);
     setIsEditModalOpen(true);
+  };
+
+  const handleUpdateStrategyName = (strategyId: string, newName: string) => {
+    updateStrategy(strategyId, { name: newName, updatedAt: new Date().toISOString() });
+  };
+
+  const handleUpdateStrategyTags = (strategyId: string, newTags: string[]) => {
+    updateStrategy(strategyId, { tags: newTags, updatedAt: new Date().toISOString() });
   };
 
   const handleDuplicateStrategy = (strategy: StrategyTemplate) => {
@@ -120,12 +130,23 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
               {/* Header */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2" style={{ color: 'var(--text-primary)' }}>
-                    {strategy.name}
-                  </h3>
+                  <div className="mb-2">
+                    <InlineEditableTitle
+                      value={strategy.name}
+                      onSave={(newName) => handleUpdateStrategyName(strategy.id, newName)}
+                      className="font-semibold text-lg"
+                      titleStyle={{ color: 'var(--text-primary)' }}
+                      placeholder="Strategy name..."
+                    />
+                  </div>
                   <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
                     {strategy.description}
                   </p>
+                  <TagEditor
+                    tags={strategy.tags}
+                    onTagsChange={(newTags) => handleUpdateStrategyTags(strategy.id, newTags)}
+                    className="mb-2"
+                  />
                 </div>
                 
                 <div className="flex items-center space-x-2">

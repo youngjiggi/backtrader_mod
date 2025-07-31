@@ -3,6 +3,8 @@ import Header from './Header';
 import CollapsibleSection from './CollapsibleSection';
 import MetricsCards from './MetricsCards';
 import NewBacktestModal from './NewBacktestModal';
+import InlineEditableTitle from './InlineEditableTitle';
+import TagEditor from './TagEditor';
 import { BarChart3, Library, Plus, X, Clock, Play, Search, List } from 'lucide-react';
 import { generateMockStageData } from '../utils/mockStageData';
 
@@ -54,6 +56,7 @@ interface DashboardProps {
   onNavigateToStrategies?: () => void;
   onNavigateToReport?: (backtest: BacktestReportData) => void;
   onNavigateToSignIn?: () => void;
+  onNavigateToSettings?: () => void;
 }
 
 interface RunningBacktest {
@@ -64,9 +67,10 @@ interface RunningBacktest {
   startTime: string;
   progress: number;
   status: 'running' | 'completed' | 'failed';
+  tags: string[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToSignIn }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToSignIn, onNavigateToSettings }) => {
   const [isNewBacktestModalOpen, setIsNewBacktestModalOpen] = useState(false);
   const [runningBacktests, setRunningBacktests] = useState<RunningBacktest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,7 +186,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
       timeframe: '1d',
       startTime: new Date().toISOString(),
       progress: 0,
-      status: 'running'
+      status: 'running',
+      tags: ['new', 'test']
     };
 
     setRunningBacktests(prev => [...prev, newBacktest]);
@@ -219,6 +224,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
     setRunningBacktests(prev => prev.filter(bt => bt.id !== id));
   };
 
+  const handleUpdateBacktestName = (backtestId: string, newName: string) => {
+    setRunningBacktests(prev => 
+      prev.map(bt => 
+        bt.id === backtestId 
+          ? { ...bt, name: newName }
+          : bt
+      )
+    );
+  };
+
+  const handleUpdateBacktestTags = (backtestId: string, newTags: string[]) => {
+    setRunningBacktests(prev => 
+      prev.map(bt => 
+        bt.id === backtestId 
+          ? { ...bt, tags: newTags }
+          : bt
+      )
+    );
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -231,7 +256,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Header onSignInClick={onNavigateToSignIn} />
+      <Header onSignInClick={onNavigateToSignIn} onSettingsClick={onNavigateToSettings} />
       
       {/* Hero Section */}
       <section className="relative h-96 overflow-hidden">
@@ -364,13 +389,24 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
                           <X size={10} className="text-white" />
                         </div>
                       )}
-                      <div>
-                        <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {backtest.name}
-                        </h4>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      <div className="flex-1">
+                        <div className="mb-1">
+                          <InlineEditableTitle
+                            value={backtest.name}
+                            onSave={(newName) => handleUpdateBacktestName(backtest.id, newName)}
+                            className="font-medium"
+                            titleStyle={{ color: 'var(--text-primary)' }}
+                            placeholder="Backtest name..."
+                          />
+                        </div>
+                        <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                           {backtest.symbol} • {backtest.timeframe} • Started {new Date(backtest.startTime).toLocaleTimeString()}
                         </p>
+                        <TagEditor
+                          tags={backtest.tags}
+                          onTagsChange={(newTags) => handleUpdateBacktestTags(backtest.id, newTags)}
+                          className="mb-1"
+                        />
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">

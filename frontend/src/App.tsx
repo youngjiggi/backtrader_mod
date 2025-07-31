@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { FontSizeProvider } from './contexts/FontSizeContext';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
 import Dashboard from './components/Dashboard';
@@ -9,8 +10,9 @@ import StrategyLibrary from './components/StrategyLibrary';
 import ReportScreen from './components/ReportScreen';
 import SignInScreen from './components/SignInScreen';
 import WatchlistManagement from './components/WatchlistManagement';
+import SettingsScreen from './components/SettingsScreen';
 
-type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'signin' | 'watchlists';
+type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'signin' | 'watchlists' | 'settings';
 
 interface BacktestData {
   id: string;
@@ -129,8 +131,18 @@ function App() {
     setCurrentView('signin');
   };
 
+  const handleNavigateToSettings = () => {
+    setCurrentView('settings');
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
+      case 'settings':
+        return (
+          <SettingsScreen 
+            onBack={() => setCurrentView('dashboard')}
+          />
+        );
       case 'signin':
         return (
           <SignInScreen 
@@ -187,6 +199,7 @@ function App() {
             onNavigateToStrategies={() => setCurrentView('strategies')}
             onNavigateToReport={handleNavigateToReport}
             onNavigateToSignIn={handleNavigateToSignIn}
+            onNavigateToSettings={handleNavigateToSettings}
           />
         );
     }
@@ -194,13 +207,15 @@ function App() {
 
   return (
     <ThemeProvider>
-      <StrategyProvider>
-        <WatchlistProvider>
-          <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-            {renderCurrentView()}
-          </div>
-        </WatchlistProvider>
-      </StrategyProvider>
+      <FontSizeProvider>
+        <StrategyProvider>
+          <WatchlistProvider>
+            <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+              {renderCurrentView()}
+            </div>
+          </WatchlistProvider>
+        </StrategyProvider>
+      </FontSizeProvider>
     </ThemeProvider>
   );
 }

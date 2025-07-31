@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Download, BarChart3, TrendingUp, TrendingDown, Target, Calendar, Edit, Save } from 'lucide-react';
+import { ArrowLeft, Download, BarChart3, TrendingUp, TrendingDown, Target, Calendar, Edit, Save, ChevronDown, ChevronRight } from 'lucide-react';
 import StageAnalysisChart from './StageAnalysisChart';
 import WeinsteinLegend from './WeinsteinLegend';
 
@@ -57,6 +57,7 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
   const [showStageAnalysis, setShowStageAnalysis] = useState(true);
   const [keynote, setKeynote] = useState(backtest.keynote);
   const [isEditingKeynote, setIsEditingKeynote] = useState(false);
+  const [showBenchmarkComparison, setShowBenchmarkComparison] = useState(false);
 
   const timeframes = ['1h', '4h', '1d', '1w'];
 
@@ -80,6 +81,31 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
     { label: 'Avg Hold Time', value: backtest.avgHoldTime, icon: Calendar, color: 'var(--highlight)' },
     { label: 'Profit Factor', value: backtest.profitFactor.toFixed(2), icon: TrendingUp, color: 'var(--highlight)' },
     { label: 'Calmar Ratio', value: backtest.calmarRatio.toFixed(2), icon: BarChart3, color: 'var(--highlight)' }
+  ];
+
+  // Mock benchmark comparison data
+  const benchmarkComparisons = [
+    { 
+      benchmark: 'S&P 500', 
+      strategyReturn: backtest.totalReturn, 
+      benchmarkReturn: 12.4, 
+      alpha: backtest.totalReturn - 12.4,
+      beta: 1.15
+    },
+    { 
+      benchmark: 'Sector ETF', 
+      strategyReturn: backtest.totalReturn, 
+      benchmarkReturn: 8.7, 
+      alpha: backtest.totalReturn - 8.7,
+      beta: 0.98
+    },
+    { 
+      benchmark: 'Buy & Hold', 
+      strategyReturn: backtest.totalReturn, 
+      benchmarkReturn: 15.2, 
+      alpha: backtest.totalReturn - 15.2,
+      beta: 1.05
+    }
   ];
 
   return (
@@ -294,6 +320,103 @@ const ReportScreen: React.FC<ReportScreenProps> = ({ backtest, onBack }) => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Vs Market Benchmarks - Accordion */}
+            <div
+              className="border rounded-lg"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)'
+              }}
+            >
+              <button
+                onClick={() => setShowBenchmarkComparison(!showBenchmarkComparison)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-opacity-80 transition-colors"
+                style={{ backgroundColor: 'transparent' }}
+              >
+                <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Vs Market Benchmarks
+                </h3>
+                {showBenchmarkComparison ? (
+                  <ChevronDown size={20} style={{ color: 'var(--text-secondary)' }} />
+                ) : (
+                  <ChevronRight size={20} style={{ color: 'var(--text-secondary)' }} />
+                )}
+              </button>
+              
+              {showBenchmarkComparison && (
+                <div 
+                  className="px-6 pb-6 border-t"
+                  style={{ borderColor: 'var(--border)' }}
+                >
+                  <div className="space-y-4 pt-4">
+                    {benchmarkComparisons.map((comparison, index) => (
+                      <div 
+                        key={index}
+                        className="p-4 rounded border"
+                        style={{
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--border)'
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {comparison.benchmark}
+                          </h4>
+                          <span 
+                            className="text-sm font-medium"
+                            style={{ 
+                              color: comparison.alpha >= 0 ? '#10b981' : '#ef4444' 
+                            }}
+                          >
+                            Alpha: {comparison.alpha >= 0 ? '+' : ''}{comparison.alpha.toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span style={{ color: 'var(--text-secondary)' }}>Strategy</span>
+                              <span 
+                                className="font-medium"
+                                style={{ color: comparison.strategyReturn >= 0 ? '#10b981' : '#ef4444' }}
+                              >
+                                {comparison.strategyReturn >= 0 ? '+' : ''}{comparison.strategyReturn.toFixed(1)}%
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span style={{ color: 'var(--text-secondary)' }}>Benchmark</span>
+                              <span 
+                                className="font-medium"
+                                style={{ color: comparison.benchmarkReturn >= 0 ? '#10b981' : '#ef4444' }}
+                              >
+                                {comparison.benchmarkReturn >= 0 ? '+' : ''}{comparison.benchmarkReturn.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span style={{ color: 'var(--text-secondary)' }}>Beta</span>
+                              <span className="font-medium" style={{ color: 'var(--highlight)' }}>
+                                {comparison.beta.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span style={{ color: 'var(--text-secondary)' }}>Outperformance</span>
+                              <span 
+                                className="font-medium"
+                                style={{ color: comparison.alpha >= 0 ? '#10b981' : '#ef4444' }}
+                              >
+                                {comparison.alpha >= 0 ? '+' : ''}{comparison.alpha.toFixed(1)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Conflict Log */}

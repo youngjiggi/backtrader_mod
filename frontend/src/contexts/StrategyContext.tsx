@@ -13,6 +13,7 @@ export interface StrategyTemplate {
   relativeVolume: boolean;
   atrTrim: boolean;
   phaseId: boolean;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -55,6 +56,7 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       relativeVolume: false,
       atrTrim: false,
       phaseId: false,
+      tags: ['breakout', 'atr', 'classic', 'momentum'],
       createdAt: '2025-01-20T10:00:00Z',
       updatedAt: '2025-01-20T10:00:00Z'
     },
@@ -71,6 +73,7 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       relativeVolume: true,
       atrTrim: true,
       phaseId: false,
+      tags: ['conservative', 'volume', 'cvd', 'low-risk'],
       createdAt: '2025-01-18T14:30:00Z',
       updatedAt: '2025-01-18T14:30:00Z'
     },
@@ -87,6 +90,7 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       relativeVolume: true,
       atrTrim: true,
       phaseId: true,
+      tags: ['advanced', 'reversal', 'phase-id', 'scalping'],
       createdAt: '2025-01-15T09:15:00Z',
       updatedAt: '2025-01-22T16:45:00Z'
     }

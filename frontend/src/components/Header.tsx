@@ -1,12 +1,13 @@
 import React from 'react';
-import { User } from 'lucide-react';
+import { User, Settings } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 interface HeaderProps {
   onSignInClick?: () => void;
+  onSettingsClick?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ onSignInClick }) => {
+const Header: React.FC<HeaderProps> = ({ onSignInClick, onSettingsClick }) => {
   return (
     <header 
       className="border-b px-6 py-4"
@@ -39,6 +40,18 @@ const Header: React.FC<HeaderProps> = ({ onSignInClick }) => {
         {/* Controls */}
         <div className="flex items-center space-x-4">
           <ThemeToggle />
+          <button 
+            onClick={onSettingsClick}
+            className="p-2 rounded-lg border transition-colors duration-200 hover:bg-opacity-80"
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)'
+            }}
+            title="Settings"
+          >
+            <Settings size={20} />
+          </button>
           <button 
             onClick={onSignInClick}
             className="p-2 rounded-lg border transition-colors duration-200 hover:bg-opacity-80"

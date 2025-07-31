@@ -3,6 +3,8 @@ import { Search, Filter, TrendingUp, Target, BarChart3 } from 'lucide-react';
 import ViewToggle from './ViewToggle';
 import FilterModal, { FilterOptions } from './FilterModal';
 import SortableHeader from './SortableHeader';
+import InlineEditableTitle from './InlineEditableTitle';
+import TagEditor from './TagEditor';
 
 interface BacktestData {
   id: string;
@@ -17,6 +19,7 @@ interface BacktestData {
   maxDrawdown: number;
   isUnread: boolean;
   keynote: string;
+  tags: string[];
 }
 
 interface LibraryProps {
@@ -47,7 +50,7 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
   });
 
   // Sample data
-  const backtests: BacktestData[] = [
+  const [backtests, setBacktests] = useState<BacktestData[]>([
     {
       id: '1',
       name: 'ATR Breakout Strategy',
@@ -60,7 +63,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       totalReturn: 24.7,
       maxDrawdown: -8.2,
       isUnread: true,
-      keynote: 'Strong performance in trending markets with improved exit signals'
+      keynote: 'Strong performance in trending markets with improved exit signals',
+      tags: ['breakout', 'atr', 'trending', 'momentum']
     },
     {
       id: '2',
@@ -74,7 +78,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       totalReturn: 31.2,
       maxDrawdown: -12.4,
       isUnread: false,
-      keynote: 'Excellent reversal detection, needs volume confirmation'
+      keynote: 'Excellent reversal detection, needs volume confirmation',
+      tags: ['rsi', 'divergence', 'reversal', 'oversold']
     },
     {
       id: '3',
@@ -88,7 +93,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       totalReturn: 18.3,
       maxDrawdown: -6.8,
       isUnread: true,
-      keynote: 'Stable returns with low drawdown, good for risk-averse strategies'
+      keynote: 'Stable returns with low drawdown, good for risk-averse strategies',
+      tags: ['moving-average', 'cross', 'trend-following', 'conservative']
     },
     {
       id: '4',
@@ -102,7 +108,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       totalReturn: 22.1,
       maxDrawdown: -9.5,
       isUnread: false,
-      keynote: 'Promising early results, requires more testing on different market conditions'
+      keynote: 'Promising early results, requires more testing on different market conditions',
+      tags: ['phase', 'reversal', 'experimental', 'scalping']
     },
     {
       id: '5',
@@ -116,9 +123,10 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       totalReturn: 28.4,
       maxDrawdown: -15.2,
       isUnread: false,
-      keynote: 'High volatility strategy, works well in crypto markets'
+      keynote: 'High volatility strategy, works well in crypto markets',
+      tags: ['cvd', 'momentum', 'crypto', 'high-frequency']
     }
-  ];
+  ]);
 
   // Helper functions
   const handleSort = (key: string) => {
@@ -149,6 +157,26 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
     } else {
       setSelectedItems(filteredBacktests.map(item => item.id));
     }
+  };
+
+  const handleUpdateBacktestName = (backtestId: string, newName: string) => {
+    setBacktests(prev => 
+      prev.map(bt => 
+        bt.id === backtestId 
+          ? { ...bt, name: newName }
+          : bt
+      )
+    );
+  };
+
+  const handleUpdateBacktestTags = (backtestId: string, newTags: string[]) => {
+    setBacktests(prev => 
+      prev.map(bt => 
+        bt.id === backtestId 
+          ? { ...bt, tags: newTags }
+          : bt
+      )
+    );
   };
 
   const applyAdvancedFilters = (backtest: BacktestData) => {
@@ -191,7 +219,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
   const filteredBacktests = backtests.filter(backtest => {
     const matchesSearch = backtest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          backtest.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         backtest.keynote.toLowerCase().includes(searchTerm.toLowerCase());
+                         backtest.keynote.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         backtest.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesTimeframe = filterTimeframe === 'all' || backtest.timeframe === filterTimeframe;
     const matchesAdvancedFilters = applyAdvancedFilters(backtest);
     
@@ -319,13 +348,24 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
                       title="Unread"
                     />
                   )}
-                  <div>
-                    <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {backtest.name}
+                  <div className="flex-1">
+                    <div className="mb-1">
+                      <InlineEditableTitle
+                        value={backtest.name}
+                        onSave={(newName) => handleUpdateBacktestName(backtest.id, newName)}
+                        className="font-medium"
+                        titleStyle={{ color: 'var(--text-primary)' }}
+                        placeholder="Backtest name..."
+                      />
                     </div>
-                    <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <div className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                       {backtest.version}
                     </div>
+                    <TagEditor
+                      tags={backtest.tags}
+                      onTagsChange={(newTags) => handleUpdateBacktestTags(backtest.id, newTags)}
+                      className="mb-1"
+                    />
                   </div>
                 </div>
               </td>
@@ -399,13 +439,24 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
                     title="Unread"
                   />
                 )}
-                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  {backtest.name}
-                </h3>
+                <div className="flex-1">
+                  <InlineEditableTitle
+                    value={backtest.name}
+                    onSave={(newName) => handleUpdateBacktestName(backtest.id, newName)}
+                    className="font-semibold"
+                    titleStyle={{ color: 'var(--text-primary)' }}
+                    placeholder="Backtest name..."
+                  />
+                </div>
               </div>
               <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                 {backtest.version} • {backtest.symbol} • {backtest.timeframe}
               </p>
+              <TagEditor
+                tags={backtest.tags}
+                onTagsChange={(newTags) => handleUpdateBacktestTags(backtest.id, newTags)}
+                className="mb-2"
+              />
               <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                 {new Date(backtest.date).toLocaleDateString()}
               </p>
