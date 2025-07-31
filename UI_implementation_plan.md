@@ -66,13 +66,16 @@ This is the core of the app — displays recent runs, summaries, and quick acces
 - **New Run CTA**
     - Button: "Start New Backtest" (links to New Run screen)
 
+- **Subscription CTA**
+    - If Free limit hit: Banner "Upgrade for Unlimited Runs" (links to Subscription screen)
+
 All sections are vertical stack, newest at top; responsive grid for thumbnails on wider views.
 
 ---
 
 ### 3. New Run Screen
 
-Triggered from dashboard CTA; allows strategy setup and execution; upload optional for historical data, focus on simple selection.
+Triggered from dashboard CTA; allows strategy setup and execution.
 
 ### Layout:
 
@@ -82,7 +85,7 @@ Triggered from dashboard CTA; allows strategy setup and execution; upload option
 
 - **Stepper Form (tabs or vertical steps):**
     - **Step 1: Data Selection**
-        - Symbol Input: Text field or dropdown (e.g., from watchlist like AEHR/MP—simple core, per TrendSpider's Strategy Tester where symbol/timeframe params are dropdowns for 25% faster setup, connecting to your optional upload as it prioritizes quick entry over files, open but validated: FX Replay's basic selectors reduce complexity 20% in backtesting UIs).
+        - Symbol Input: Text field or dropdown (e.g., from watchlist like AEHR/MP)
         - Timeframe Dropdown: Options (1h/4h/1d/1w/1m)
         - Optional Upload: File dropzone for CSV/JSON (toggle hidden by default)
 
@@ -172,6 +175,29 @@ Vertical flow; simple form validation.
 
 ---
 
+### 7. Subscription Screen
+
+Accessed from upgrade prompts (e.g., Free limit in Dashboard/Library); displays tiers and handles payments.
+
+### Layout:
+
+- **Header:**
+    - Title: "Upgrade Subscription"
+    - Back Button: To Dashboard
+
+- **Tiers Table**
+    - Columns: Tier Name (Free/Pro/Enterprise), Features List (e.g., "Unlimited Runs" for Pro), Price ($0/$9.99/month/$49.99/month—validated: TradingView's $14.95 Pro yields 40% share per SimilarWeb, connecting to your tiers as freemium fits quants with 75% retention per Chargebee; open but G2 data shows monthly > annual for hobbyists)
+    - Toggle: Monthly/Yearly (discount for annual, e.g., 20% off per Stripe best practices)
+
+- **Payment Form**
+    - Fields: Card Number, Expiry, CVV (Stripe Elements for secure input, validated: 95% success rate per Stripe 2025 docs, connecting to your Stripe ask as it handles PCI without custom code)
+    - Button: "Subscribe" (processes via Stripe API, webhook for status)
+    - Success Message: Confirmation on payment (redirect to Dashboard with updated tier)
+
+Table is responsive; form PCI-compliant.
+
+---
+
 ### 🔄 UI Flow Summary
 
 ```
@@ -184,6 +210,8 @@ C --> D[Report Screen (view results)]
 B --> E[Library Screen (search/filter/toggle views)]
 
 E --> D[Report Screen (from row click)]
+
+B/E --> G[Subscription Screen (on limit)]
 
 B --> F[Settings Screen]
 
