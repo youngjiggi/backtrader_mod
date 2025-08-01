@@ -23,7 +23,7 @@ const Header: React.FC<HeaderProps> = ({ onSignInClick, onSettingsClick }) => {
             className="text-2xl font-bold"
             style={{ color: 'var(--accent)' }}
           >
-            BackstreetBoys
+            Backstreet Betas
           </h1>
           <span 
             className="text-sm px-2 py-1 rounded"

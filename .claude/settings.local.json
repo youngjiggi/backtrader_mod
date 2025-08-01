@@ -29,7 +29,9 @@
       "WebFetch(domain:www.backtrader.com)",
       "WebFetch(domain:vectorbt.dev)",
       "Bash(rmdir:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }

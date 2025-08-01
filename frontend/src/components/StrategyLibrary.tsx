@@ -69,7 +69,8 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
       profileBins: [...strategy.profileBins],
       relativeVolume: strategy.relativeVolume,
       atrTrim: strategy.atrTrim,
-      phaseId: strategy.phaseId
+      phaseId: strategy.phaseId,
+      tags: [...strategy.tags]
     };
     addStrategy(duplicate);
   };
@@ -88,14 +89,16 @@ const StrategyLibrary: React.FC<StrategyLibraryProps> = ({ onBack, onRunStrategy
           <div className="flex items-center space-x-4">
             <button
               onClick={onBack}
-              className="p-2 rounded-lg border transition-colors hover:bg-opacity-80"
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors hover:bg-opacity-80"
               style={{
                 backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)',
                 color: 'var(--text-primary)'
               }}
+              title="Back to Dashboard"
             >
               <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back to Main</span>
             </button>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
               Strategy Library

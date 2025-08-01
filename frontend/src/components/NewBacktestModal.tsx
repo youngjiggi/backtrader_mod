@@ -95,7 +95,8 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
         profileBins: formData.profileBins,
         relativeVolume: formData.relativeVolume,
         atrTrim: formData.atrTrim,
-        phaseId: formData.phaseId
+        phaseId: formData.phaseId,
+        tags: []
       });
       
       alert(`Strategy "${strategyName}" saved successfully!`);

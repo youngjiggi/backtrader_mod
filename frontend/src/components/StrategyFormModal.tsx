@@ -117,7 +117,8 @@ const StrategyFormModal: React.FC<StrategyFormModalProps> = ({
       profileBins: formData.profileBins,
       relativeVolume: formData.relativeVolume,
       atrTrim: formData.atrTrim,
-      phaseId: formData.phaseId
+      phaseId: formData.phaseId,
+      tags: editingStrategy?.tags || []
     };
 
     if (editingStrategy) {
