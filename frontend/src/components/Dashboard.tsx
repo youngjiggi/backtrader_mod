@@ -59,6 +59,7 @@ interface DashboardProps {
   onNavigateToWatchlistManagement?: () => void;
   onNavigateToStrategies?: () => void;
   onNavigateToReport?: (backtest: BacktestReportData) => void;
+  onNavigateToStrategyView?: (strategy: RecentRun) => void;
   onNavigateToSignIn?: () => void;
   onNavigateToSettings?: () => void;
 }
@@ -74,7 +75,7 @@ interface RunningBacktest {
   tags: string[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToSignIn, onNavigateToSettings }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToStrategyView, onNavigateToSignIn, onNavigateToSettings }) => {
   const [isNewBacktestModalOpen, setIsNewBacktestModalOpen] = useState(false);
   const [runningBacktests, setRunningBacktests] = useState<RunningBacktest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -365,6 +366,17 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
     setComparisonStrategies(prev => prev.filter(id => id !== strategyId));
   };
 
+  const handleEditStrategy = (strategyId: string) => {
+    // TODO: Navigate to strategy editor or open edit modal
+    console.log('Edit strategy:', strategyId);
+  };
+
+  const handleNavigateToStrategyView = (run: RecentRun) => {
+    if (onNavigateToStrategyView) {
+      onNavigateToStrategyView(run);
+    }
+  };
+
   const handleBacktestStarted = (backtestId: string) => {
     const newBacktest: RunningBacktest = {
       id: backtestId,
@@ -577,6 +589,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
       </section>
       
       <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+        {/* Top Performant Strategies Carousel */}
+        <RecentRunsCarousel
+          runs={recentRuns}
+          selectedRunId={selectedRecentRun?.id || null}
+          onRunSelect={handleRecentRunSelect}
+          timeInterval={timeInterval}
+          onTimeIntervalChange={setTimeInterval}
+          baseStrategyId={baseStrategyId}
+          comparisonStrategies={comparisonStrategies}
+          onSetBaseStrategy={handleSetBaseStrategy}
+          onAddToComparison={handleAddToComparison}
+          onRemoveFromComparison={handleRemoveFromComparison}
+          onEditStrategy={handleEditStrategy}
+          onDoubleClickStrategy={handleNavigateToStrategyView}
+        />
+
         {/* Performance Overview - Current Portfolio Tracking */}
         <div>
           <div className="flex items-center justify-between mb-6">
@@ -598,20 +626,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
             timeInterval={timeInterval}
           />
         )}
-
-        {/* Recent Runs Carousel */}
-        <RecentRunsCarousel
-          runs={recentRuns}
-          selectedRunId={selectedRecentRun?.id || null}
-          onRunSelect={handleRecentRunSelect}
-          timeInterval={timeInterval}
-          onTimeIntervalChange={setTimeInterval}
-          baseStrategyId={baseStrategyId}
-          comparisonStrategies={comparisonStrategies}
-          onSetBaseStrategy={handleSetBaseStrategy}
-          onAddToComparison={handleAddToComparison}
-          onRemoveFromComparison={handleRemoveFromComparison}
-        />
 
         {/* Performance Details Accordion */}
         {(baseStrategyId && comparisonStrategies.length > 0) && (

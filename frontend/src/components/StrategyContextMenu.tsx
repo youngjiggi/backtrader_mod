@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Star, Plus, X, Target } from 'lucide-react';
+import { Star, Plus, X, Target, Edit } from 'lucide-react';
 
 interface StrategyContextMenuProps {
   isOpen: boolean;
@@ -11,6 +11,7 @@ interface StrategyContextMenuProps {
   onSetBaseStrategy: (strategyId: string) => void;
   onAddToComparison: (strategyId: string) => void;
   onRemoveFromComparison: (strategyId: string) => void;
+  onEditStrategy: (strategyId: string) => void;
   onClose: () => void;
 }
 
@@ -24,6 +25,7 @@ const StrategyContextMenu: React.FC<StrategyContextMenuProps> = ({
   onSetBaseStrategy,
   onAddToComparison,
   onRemoveFromComparison,
+  onEditStrategy,
   onClose
 }) => {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -67,6 +69,11 @@ const StrategyContextMenu: React.FC<StrategyContextMenuProps> = ({
     onClose();
   };
 
+  const handleEditStrategy = () => {
+    onEditStrategy(strategyId);
+    onClose();
+  };
+
   if (!isOpen) return null;
 
   // Adjust position to prevent menu from going off-screen
@@ -96,6 +103,24 @@ const StrategyContextMenu: React.FC<StrategyContextMenuProps> = ({
 
       {/* Menu Items */}
       <div className="py-1">
+        {/* Edit Strategy */}
+        <button
+          onClick={handleEditStrategy}
+          className="w-full flex items-center space-x-3 px-3 py-2 text-sm transition-colors hover:bg-opacity-80"
+          style={{
+            backgroundColor: 'transparent',
+            color: 'var(--text-primary)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
+        >
+          <Edit size={16} style={{ color: 'var(--accent)' }} />
+          <span>Edit Strategy</span>
+        </button>
         {!isBaseStrategy && (
           <button
             onClick={handleSetBaseStrategy}

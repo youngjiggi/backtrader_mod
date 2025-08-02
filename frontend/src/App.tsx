@@ -3,16 +3,18 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { FontSizeProvider } from './contexts/FontSizeContext';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
+import { RecentRun } from './components/RecentRunsCarousel';
 import Dashboard from './components/Dashboard';
 import TabbedLibrary from './components/TabbedLibrary';
 import ComparisonScreen from './components/ComparisonScreen';
 import StrategyLibrary from './components/StrategyLibrary';
 import ReportScreen from './components/ReportScreen';
+import StrategyViewScreen from './components/StrategyViewScreen';
 import SignInScreen from './components/SignInScreen';
 import WatchlistManagement from './components/WatchlistManagement';
 import SettingsScreen from './components/SettingsScreen';
 
-type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'signin' | 'watchlists' | 'settings';
+type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'strategy-view' | 'signin' | 'watchlists' | 'settings';
 
 interface BacktestData {
   id: string;
@@ -78,6 +80,7 @@ function App() {
   const [currentView, setCurrentView] = useState<CurrentView>('dashboard');
   const [selectedBacktestsForComparison, setSelectedBacktestsForComparison] = useState<BacktestData[]>([]);
   const [selectedBacktestForReport, setSelectedBacktestForReport] = useState<BacktestReportData | null>(null);
+  const [selectedStrategyForView, setSelectedStrategyForView] = useState<RecentRun | null>(null);
   const [librarySearchTerm, setLibrarySearchTerm] = useState<string>('');
 
   // Sample data for comparison
@@ -135,6 +138,11 @@ function App() {
     setCurrentView('settings');
   };
 
+  const handleNavigateToStrategyView = (strategy: RecentRun) => {
+    setSelectedStrategyForView(strategy);
+    setCurrentView('strategy-view');
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'settings':
@@ -153,6 +161,13 @@ function App() {
         return selectedBacktestForReport ? (
           <ReportScreen 
             backtest={selectedBacktestForReport}
+            onBack={() => setCurrentView('dashboard')} 
+          />
+        ) : null;
+      case 'strategy-view':
+        return selectedStrategyForView ? (
+          <StrategyViewScreen 
+            strategy={selectedStrategyForView}
             onBack={() => setCurrentView('dashboard')} 
           />
         ) : null;
@@ -198,6 +213,7 @@ function App() {
             onNavigateToWatchlistManagement={() => setCurrentView('watchlists')}
             onNavigateToStrategies={() => setCurrentView('strategies')}
             onNavigateToReport={handleNavigateToReport}
+            onNavigateToStrategyView={handleNavigateToStrategyView}
             onNavigateToSignIn={handleNavigateToSignIn}
             onNavigateToSettings={handleNavigateToSettings}
           />

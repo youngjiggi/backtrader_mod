@@ -59,6 +59,8 @@ interface RecentRunsCarouselProps {
   onSetBaseStrategy: (strategyId: string) => void;
   onAddToComparison: (strategyId: string) => void;
   onRemoveFromComparison: (strategyId: string) => void;
+  onEditStrategy: (strategyId: string) => void;
+  onDoubleClickStrategy?: (run: RecentRun) => void;
 }
 
 const RecentRunsCarousel: React.FC<RecentRunsCarouselProps> = ({
@@ -71,7 +73,9 @@ const RecentRunsCarousel: React.FC<RecentRunsCarouselProps> = ({
   comparisonStrategies,
   onSetBaseStrategy,
   onAddToComparison,
-  onRemoveFromComparison
+  onRemoveFromComparison,
+  onEditStrategy,
+  onDoubleClickStrategy
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [contextMenu, setContextMenu] = useState<{
@@ -159,6 +163,12 @@ const RecentRunsCarousel: React.FC<RecentRunsCarouselProps> = ({
 
   const handleCloseContextMenu = () => {
     setContextMenu(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const handleDoubleClick = (run: RecentRun) => {
+    if (onDoubleClickStrategy) {
+      onDoubleClickStrategy(run);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -250,6 +260,7 @@ const RecentRunsCarousel: React.FC<RecentRunsCarouselProps> = ({
                 Math.min(runs.length, 3) === 2 ? 'w-1/2' : 'w-1/3'
               }`}
               onClick={() => handleCardClick(run, index)}
+              onDoubleClick={() => handleDoubleClick(run)}
               onContextMenu={(e) => handleRightClick(e, run)}
             >
               <div
@@ -391,6 +402,7 @@ const RecentRunsCarousel: React.FC<RecentRunsCarouselProps> = ({
         onSetBaseStrategy={onSetBaseStrategy}
         onAddToComparison={onAddToComparison}
         onRemoveFromComparison={onRemoveFromComparison}
+        onEditStrategy={onEditStrategy}
         onClose={handleCloseContextMenu}
       />
     </div>
