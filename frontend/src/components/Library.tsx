@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, TrendingUp, Target, BarChart3 } from 'lucide-react';
+import { Search, Filter, TrendingUp, Target, BarChart3, ExternalLink, LayoutGrid } from 'lucide-react';
 import ViewToggle from './ViewToggle';
 import FilterModal, { FilterOptions } from './FilterModal';
 import SortableHeader from './SortableHeader';
@@ -26,15 +26,19 @@ interface LibraryProps {
   onBack: () => void;
   onCompareSelected?: (selectedIds: string[]) => void;
   onReportOpen?: (backtest: BacktestData) => void;
+  onOpenSelected?: (backtests: BacktestData[]) => void;
+  onOpenInComparisonView?: (backtests: BacktestData[], layoutMode?: string) => void;
+  onOpenInSplitView?: (backtests: BacktestData[]) => void;
   initialSearchTerm?: string;
 }
 
-const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, initialSearchTerm }) => {
+const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOpenSelected, onOpenInComparisonView, onOpenInSplitView, initialSearchTerm }) => {
   const [view, setView] = useState<'list' | 'thumbnail'>('list');
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
   const [filterTimeframe, setFilterTimeframe] = useState('all');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number>(-1);
   const [sortConfig, setSortConfig] = useState<{
     key: string;
     direction: 'asc' | 'desc' | null;
@@ -143,12 +147,41 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
     setSortConfig({ key, direction });
   };
 
-  const handleSelectItem = (id: string) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
+  const handleSelectItem = (id: string, index?: number, event?: React.MouseEvent) => {
+    if (event?.shiftKey && lastSelectedIndex !== -1 && index !== undefined) {
+      // Range selection with Shift+click
+      const start = Math.min(lastSelectedIndex, index);
+      const end = Math.max(lastSelectedIndex, index);
+      const rangeIds = sortedBacktests.slice(start, end + 1).map(item => item.id);
+      
+      setSelectedItems(prev => {
+        const newSelection = [...prev];
+        rangeIds.forEach(rangeId => {
+          if (!newSelection.includes(rangeId)) {
+            newSelection.push(rangeId);
+          }
+        });
+        return newSelection;
+      });
+    } else if (event?.ctrlKey || event?.metaKey) {
+      // Individual toggle with Ctrl/Cmd+click
+      setSelectedItems(prev => 
+        prev.includes(id) 
+          ? prev.filter(item => item !== id)
+          : [...prev, id]
+      );
+    } else {
+      // Single selection
+      setSelectedItems(prev => 
+        prev.includes(id) 
+          ? prev.filter(item => item !== id)
+          : [...prev, id]
+      );
+    }
+    
+    if (index !== undefined) {
+      setLastSelectedIndex(index);
+    }
   };
 
   const handleSelectAll = () => {
@@ -263,14 +296,30 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
       <table className="w-full">
         <thead>
           <tr className="border-b" style={{ borderColor: 'var(--border)' }}>
-            <th className="w-12 py-3 px-4">
-              <input
-                type="checkbox"
-                checked={selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0}
-                onChange={handleSelectAll}
-                className="rounded"
-                style={{ accentColor: 'var(--accent)' }}
-              />
+            <th className="w-16 py-3 px-4">
+              <div className="flex items-center justify-center">
+                <label className="flex items-center justify-center w-8 h-8 rounded-lg border-2 cursor-pointer hover:bg-opacity-50 transition-all"
+                  style={{ 
+                    borderColor: selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0 ? 'var(--accent)' : 'var(--border)',
+                    backgroundColor: selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0 ? 'var(--accent)' : 'transparent'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0}
+                    onChange={handleSelectAll}
+                    className="sr-only"
+                  />
+                  {selectedItems.length === sortedBacktests.length && sortedBacktests.length > 0 && (
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  {selectedItems.length > 0 && selectedItems.length < sortedBacktests.length && (
+                    <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: 'var(--accent)' }}></div>
+                  )}
+                </label>
+              </div>
             </th>
             <SortableHeader
               sortKey="name"
@@ -320,26 +369,61 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
           </tr>
         </thead>
         <tbody>
-          {sortedBacktests.map((backtest) => (
-            <tr
-              key={backtest.id}
-              className={`border-b hover:bg-opacity-50 transition-colors cursor-pointer ${
-                selectedItems.includes(backtest.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''
-              }`}
-              style={{ borderColor: 'var(--border)' }}
-              onClick={() => onReportOpen && onReportOpen(backtest)}
-            >
-              <td className="py-4 px-4">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.includes(backtest.id)}
-                  onChange={() => handleSelectItem(backtest.id)}
-                  className="rounded"
-                  style={{ accentColor: 'var(--accent)' }}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </td>
-              <td className="py-4 px-4 cursor-pointer">
+          {sortedBacktests.map((backtest, index) => {
+            const isSelected = selectedItems.includes(backtest.id);
+            return (
+              <tr
+                key={backtest.id}
+                className={`border-b hover:bg-opacity-75 transition-all duration-200 group ${
+                  isSelected 
+                    ? 'ring-2 ring-opacity-50' 
+                    : 'hover:bg-opacity-30'
+                }`}
+                style={{ 
+                  borderColor: 'var(--border)',
+                  backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                  ringColor: isSelected ? 'var(--accent)' : 'transparent'
+                }}
+                onClick={(e) => {
+                  // Don't trigger selection if clicking on action buttons or links
+                  const target = e.target as HTMLElement;
+                  if (!target.closest('button') && !target.closest('a')) {
+                    handleSelectItem(backtest.id, index, e);
+                  }
+                }}
+              >
+                <td className="py-4 px-4">
+                  <div className="flex items-center justify-center">
+                    <label className="flex items-center justify-center w-6 h-6 rounded border-2 cursor-pointer hover:scale-110 transition-transform"
+                      style={{ 
+                        borderColor: isSelected ? 'var(--accent)' : 'var(--border)',
+                        backgroundColor: isSelected ? 'var(--accent)' : 'transparent'
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectItem(backtest.id, index, e);
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {}} // Handled by label click
+                        className="sr-only"
+                      />
+                      {isSelected && (
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </label>
+                  </div>
+                </td>
+              <td className="py-4 px-4 cursor-pointer" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReportOpen && onReportOpen(backtest);
+                }}
+              >
                 <div className="flex items-center space-x-3">
                   {backtest.isUnread && (
                     <span
@@ -401,7 +485,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
                 </p>
               </td>
             </tr>
-          ))}
+          );
+        })}
         </tbody>
       </table>
     </div>
@@ -409,29 +494,51 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
 
   const ThumbnailView = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {sortedBacktests.map((backtest) => (
-        <div
-          key={backtest.id}
-          className={`border rounded-lg p-6 hover:shadow-lg transition-all cursor-pointer ${
-            selectedItems.includes(backtest.id) ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
-          }`}
-          style={{
-            backgroundColor: 'var(--surface)',
-            borderColor: 'var(--border)'
-          }}
-          onClick={() => onReportOpen && onReportOpen(backtest)}
-        >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-1">
-                <input
-                  type="checkbox"
-                  checked={selectedItems.includes(backtest.id)}
-                  onChange={() => handleSelectItem(backtest.id)}
-                  className="rounded"
-                  style={{ accentColor: 'var(--accent)' }}
-                  onClick={(e) => e.stopPropagation()}
-                />
+      {sortedBacktests.map((backtest, index) => {
+        const isSelected = selectedItems.includes(backtest.id);
+        return (
+          <div
+            key={backtest.id}
+            className={`border rounded-lg p-6 hover:shadow-lg transition-all duration-200 cursor-pointer ${
+              isSelected ? 'ring-2 ring-opacity-50' : ''
+            }`}
+            style={{
+              backgroundColor: 'var(--surface)',
+              borderColor: isSelected ? 'var(--accent)' : 'var(--border)',
+              ringColor: isSelected ? 'var(--accent)' : 'transparent'
+            }}
+            onClick={(e) => {
+              const target = e.target as HTMLElement;
+              if (!target.closest('button') && !target.closest('input')) {
+                handleSelectItem(backtest.id, index, e);
+              }
+            }}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex-1">
+                <div className="flex items-center space-x-2 mb-1">
+                  <label className="flex items-center justify-center w-5 h-5 rounded border-2 cursor-pointer hover:scale-110 transition-transform"
+                    style={{ 
+                      borderColor: isSelected ? 'var(--accent)' : 'var(--border)',
+                      backgroundColor: isSelected ? 'var(--accent)' : 'transparent'
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSelectItem(backtest.id, index, e);
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => {}} // Handled by label click
+                      className="sr-only"
+                    />
+                    {isSelected && (
+                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                  </label>
                 {backtest.isUnread && (
                   <span
                     className="w-2 h-2 rounded-full"
@@ -521,7 +628,8 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
             {backtest.keynote}
           </p>
         </div>
-      ))}
+      );
+      })}
     </div>
   );
 
@@ -611,22 +719,75 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, init
           </p>
           
           {selectedItems.length > 0 && (
-            <button
-              className="px-4 py-2 rounded-lg font-medium transition-colors"
-              style={{
-                backgroundColor: 'var(--accent)',
-                color: 'var(--bg-primary)'
-              }}
-              onClick={() => {
-                if (onCompareSelected) {
-                  onCompareSelected(selectedItems);
-                } else {
-                  console.log('Compare selected items:', selectedItems);
-                }
-              }}
-            >
-              Compare Selected ({selectedItems.length})
-            </button>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                {selectedItems.length} selected
+              </span>
+              
+              <button
+                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80"
+                style={{
+                  borderColor: 'var(--border)',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--surface)'
+                }}
+                onClick={() => {
+                  const selectedBacktests = sortedBacktests.filter(bt => selectedItems.includes(bt.id));
+                  if (onOpenSelected) {
+                    onOpenSelected(selectedBacktests);
+                  } else {
+                    console.log('Open selected items:', selectedBacktests);
+                  }
+                }}
+                title="Open all selected strategies in individual tabs"
+              >
+                <ExternalLink size={16} style={{ marginRight: '4px' }} />
+                Open Selected
+              </button>
+              
+              <button
+                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80"
+                style={{
+                  borderColor: 'var(--accent)',
+                  color: 'var(--accent)',
+                  backgroundColor: 'transparent'
+                }}
+                onClick={() => {
+                  const selectedBacktests = sortedBacktests.filter(bt => selectedItems.includes(bt.id));
+                  if (onOpenInSplitView) {
+                    onOpenInSplitView(selectedBacktests);
+                  } else {
+                    console.log('Open in split view:', selectedBacktests);
+                  }
+                }}
+                title="Open selected strategies in split view (grid layout with shared panels)"
+              >
+                <LayoutGrid size={16} style={{ marginRight: '4px' }} />
+                Split View
+              </button>
+              
+              <button
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{
+                  backgroundColor: 'var(--accent)',
+                  color: 'var(--bg-primary)'
+                }}
+                onClick={() => {
+                  const selectedBacktests = sortedBacktests.filter(bt => selectedItems.includes(bt.id));
+                  if (onOpenInComparisonView) {
+                    onOpenInComparisonView(selectedBacktests);
+                  } else if (onCompareSelected) {
+                    onCompareSelected(selectedItems);
+                  } else {
+                    console.log('Compare selected items:', selectedItems);
+                  }
+                }}
+                title="Compare selected strategies side by side"
+              >
+                <BarChart3 size={16} style={{ marginRight: '4px' }} />
+                Compare ({selectedItems.length})
+              </button>
+            </div>
           )}
         </div>
 

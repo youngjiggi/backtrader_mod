@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { ArrowLeft, X, List, MoreHorizontal } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { ArrowLeft, X, List, MoreHorizontal, Layout } from 'lucide-react';
 import Library from './Library';
-import ReportScreen from './ReportScreen';
+import StrategyViewScreen from './StrategyViewScreen';
+import MultiStrategyViewScreen from './MultiStrategyViewScreen';
+import ComparisonViewContainer from './ComparisonViewContainer';
+import { RecentRun } from './RecentRunsCarousel';
 import { generateMockStageData } from '../utils/mockStageData';
 
 interface BacktestReportData {
@@ -48,9 +51,10 @@ interface BacktestReportData {
 
 interface Tab {
   id: string;
-  type: 'library' | 'report';
+  type: 'library' | 'strategy';
   title: string;
-  data?: BacktestReportData;
+  data?: RecentRun;
+  component?: React.ReactNode;
 }
 
 interface TabbedLibraryProps {
@@ -60,15 +64,18 @@ interface TabbedLibraryProps {
 }
 
 const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected, initialSearchTerm }) => {
-  const [tabs, setTabs] = useState<Tab[]>([
-    { id: 'library', type: 'library', title: 'Library' }
-  ]);
+  const [useComparisonView, setUseComparisonView] = useState(false);
+  const [comparisonStrategies, setComparisonStrategies] = useState<RecentRun[]>([]);
+  const [useMultiStrategyView, setUseMultiStrategyView] = useState(false);
+  const [multiStrategyViewStrategies, setMultiStrategyViewStrategies] = useState<RecentRun[]>([]);
+  const [useSplitView, setUseSplitView] = useState(false);
+  const [splitViewStrategy, setSplitViewStrategy] = useState<RecentRun | null>(null);
   const [activeTabId, setActiveTabId] = useState('library');
   const [tabOverflowMenuOpen, setTabOverflowMenuOpen] = useState(false);
 
   const MAX_VISIBLE_TABS = 5;
 
-  // Convert Library's BacktestData to BacktestReportData
+  // Convert Library's BacktestData to RecentRun
   interface LibraryBacktestData {
     id: string;
     name: string;
@@ -84,7 +91,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
     keynote: string;
   }
 
-  const convertToReportData = (libraryData: LibraryBacktestData): BacktestReportData => ({
+  const convertToStrategyData = (libraryData: LibraryBacktestData): RecentRun => ({
     id: libraryData.id,
     name: libraryData.name,
     version: libraryData.version,
@@ -96,79 +103,183 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
     winRate: libraryData.winRate,
     sharpe: libraryData.sharpe,
     maxDrawdown: libraryData.maxDrawdown,
-    totalTrades: 1247, // Default values - could be enhanced
+    totalTrades: 1247,
     avgHoldTime: '3.2d',
     profitFactor: 1.65,
     calmarRatio: 2.1,
-    conflictLog: [
-      'CVD negative but ATR held: +5% net',
-      'Phase reversal detected during position: Adjusted size'
-    ],
+    completedAt: libraryData.date,
     keynote: libraryData.keynote,
-    chartData: {
-      equity: [],
-      drawdown: [],
-      trades: [],
-      ...generateMockStageData(libraryData.symbol, '2024-01-01', libraryData.date, 150)
+    strategySettings: {
+      atrPeriod: 14,
+      atrMultiplier: 2.0,
+      cvdThreshold: 0.5,
+      rsiPeriod: 14,
+      rsiOversold: 30,
+      rsiOverbought: 70,
+      stopLoss: 2.0,
+      takeProfit: 4.0,
+      positionSize: 100,
+      maxPositions: 5
     }
   });
 
+  // State for tabs - initialized after function definitions
+  const [tabs, setTabs] = useState<Tab[]>([]);
 
-  const handleOpenReport = (libraryBacktest: LibraryBacktestData) => {
-    const backtest = convertToReportData(libraryBacktest);
-    const existingTab = tabs.find(tab => tab.type === 'report' && tab.data?.id === backtest.id);
+  // Initialize tabs after component mount
+  React.useEffect(() => {
+    if (tabs.length === 0) {
+      setTabs([
+        { 
+          id: 'library', 
+          type: 'library', 
+          title: 'Library'
+        }
+      ]);
+    }
+  }, [tabs.length]);
+
+  const handleOpenReport = useCallback((libraryBacktest: LibraryBacktestData) => {
+    const strategy = convertToStrategyData(libraryBacktest);
+    const existingTab = tabs.find(tab => tab.type === 'strategy' && tab.data?.id === strategy.id);
     
     if (existingTab) {
-      // Switch to existing tab
       setActiveTabId(existingTab.id);
     } else {
-      // Create new tab
       const newTab: Tab = {
-        id: `report-${backtest.id}`,
-        type: 'report',
-        title: `${backtest.name} ${backtest.version}`,
-        data: backtest
+        id: `strategy-${strategy.id}`,
+        type: 'strategy',
+        title: `${strategy.name} ${strategy.version}`,
+        data: strategy,
+        component: <StrategyViewScreen 
+          strategy={strategy}
+          onBack={() => setActiveTabId('library')}
+        />
       };
 
-      // If we're at max tabs, remove the oldest report tab (but keep library)
-      let updatedTabs = [...tabs];
-      const reportTabs = tabs.filter(tab => tab.type === 'report');
-      
-      if (reportTabs.length >= MAX_VISIBLE_TABS - 1) {
-        const oldestReportTab = reportTabs[0];
-        updatedTabs = updatedTabs.filter(tab => tab.id !== oldestReportTab.id);
-      }
+      setTabs(prev => {
+        let updatedTabs = [...prev];
+        const strategyTabs = prev.filter(tab => tab.type === 'strategy');
+        
+        if (strategyTabs.length >= MAX_VISIBLE_TABS - 1) {
+          const oldestStrategyTab = strategyTabs[0];
+          updatedTabs = updatedTabs.filter(tab => tab.id !== oldestStrategyTab.id);
+        }
 
-      updatedTabs.push(newTab);
-      setTabs(updatedTabs);
+        updatedTabs.push(newTab);
+        return updatedTabs;
+      });
       setActiveTabId(newTab.id);
     }
-  };
+  }, [tabs]);
 
-  const handleCloseTab = (tabId: string, e?: React.MouseEvent) => {
+  const handleOpenSelected = useCallback((backtests: LibraryBacktestData[]) => {
+    const newTabs: Tab[] = [];
+    
+    backtests.forEach(libraryBacktest => {
+      const strategy = convertToStrategyData(libraryBacktest);
+      const existingTab = tabs.find(tab => tab.type === 'strategy' && tab.data?.id === strategy.id);
+      
+      if (!existingTab) {
+        const newTab: Tab = {
+          id: `strategy-${strategy.id}`,
+          type: 'strategy',
+          title: `${strategy.name} ${strategy.version}`,
+          data: strategy,
+          component: <StrategyViewScreen 
+            strategy={strategy}
+            onBack={() => setActiveTabId('library')}
+          />
+        };
+        newTabs.push(newTab);
+      }
+    });
+    
+    if (newTabs.length > 0) {
+      setTabs(prev => {
+        let updatedTabs = [...prev];
+        const strategyTabs = prev.filter(tab => tab.type === 'strategy');
+        const totalNewTabs = strategyTabs.length + newTabs.length;
+        
+        if (totalNewTabs > MAX_VISIBLE_TABS - 1) {
+          const tabsToRemove = totalNewTabs - (MAX_VISIBLE_TABS - 1);
+          for (let i = 0; i < tabsToRemove; i++) {
+            if (strategyTabs[i]) {
+              updatedTabs = updatedTabs.filter(tab => tab.id !== strategyTabs[i].id);
+            }
+          }
+        }
+        
+        updatedTabs.push(...newTabs);
+        return updatedTabs;
+      });
+      
+      if (newTabs.length > 0) {
+        setActiveTabId(newTabs[newTabs.length - 1].id);
+      }
+    }
+  }, [tabs]);
+
+  const handleOpenInComparisonView = useCallback((backtests: LibraryBacktestData[], layoutMode?: string) => {
+    // Convert to strategies and set for comparison view
+    const strategies = backtests.map(convertToStrategyData);
+    setComparisonStrategies(strategies);
+    setUseComparisonView(true);
+    console.log('Comparison view requested for:', strategies, 'Layout:', layoutMode);
+  }, []);
+
+  const handleOpenInSplitView = useCallback((backtests: LibraryBacktestData[]) => {
+    if (backtests.length > 0) {
+      // Convert to strategies and open in multi-strategy view (StrategyViewScreen layout with chart grid)
+      const strategies = backtests.map(convertToStrategyData);
+      setMultiStrategyViewStrategies(strategies);
+      setUseMultiStrategyView(true);
+      console.log('Split view requested for strategies:', strategies);
+    } else {
+      // No strategies selected
+      alert('Please select strategies first to open Split View.');
+      console.log('Split view error: No strategies selected');
+    }
+  }, []);
+
+  const handleTabMove = useCallback((tabId: string, fromPaneId: string, toPaneId: string) => {
+    console.log(`Moving tab ${tabId} from ${fromPaneId} to ${toPaneId}`);
+    // Tab movement logic would be handled by SplitScreenManager
+  }, []);
+
+  const handleToggleComparisonView = useCallback(() => {
+    setUseComparisonView(!useComparisonView);
+  }, [useComparisonView]);
+
+  const handleCloseTab = useCallback((tabId: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation();
     }
 
     if (tabId === 'library') return; // Can't close library tab
 
-    const updatedTabs = tabs.filter(tab => tab.id !== tabId);
-    setTabs(updatedTabs);
+    setTabs(prev => prev.filter(tab => tab.id !== tabId));
 
     // If we closed the active tab, switch to library or previous tab
     if (activeTabId === tabId) {
-      const remainingTabs = updatedTabs.filter(tab => tab.id !== tabId);
+      const remainingTabs = tabs.filter(tab => tab.id !== tabId);
       setActiveTabId(remainingTabs.length > 0 ? remainingTabs[remainingTabs.length - 1].id : 'library');
     }
 
     setTabOverflowMenuOpen(false);
-  };
+  }, [activeTabId, tabs]);
 
-  const handleCloseAllReportTabs = () => {
-    setTabs(tabs.filter(tab => tab.type === 'library'));
+  const handleCloseAllStrategyTabs = useCallback(() => {
+    setTabs(prev => prev.filter(tab => tab.type === 'library'));
     setActiveTabId('library');
     setTabOverflowMenuOpen(false);
-  };
+    setUseComparisonView(false);
+    setComparisonStrategies([]);
+    setUseMultiStrategyView(false);
+    setMultiStrategyViewStrategies([]);
+    setUseSplitView(false);
+    setSplitViewStrategy(null);
+  }, []);
 
   const truncateTitle = (title: string, maxLength: number = 20) => {
     return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
@@ -177,6 +288,19 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
   const visibleTabs = tabs.slice(0, MAX_VISIBLE_TABS);
   const overflowTabs = tabs.slice(MAX_VISIBLE_TABS);
   const activeTab = tabs.find(tab => tab.id === activeTabId);
+
+  // Create Library component with proper props
+  const libraryComponent = (
+    <Library 
+      onBack={onBack} 
+      onCompareSelected={onCompareSelected}
+      onReportOpen={handleOpenReport}
+      onOpenSelected={handleOpenSelected}
+      onOpenInComparisonView={handleOpenInComparisonView}
+      onOpenInSplitView={handleOpenInSplitView}
+      initialSearchTerm={initialSearchTerm}
+    />
+  );
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -204,28 +328,50 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
               <span className="text-sm font-medium">Back to Main</span>
             </button>
             <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              {activeTab?.type === 'library' ? 'Backtest Library' : 'Report View'}
+              {activeTab?.type === 'library' ? 'Backtest Library' : 'Strategy Analysis'}
             </h1>
           </div>
 
-          {/* Close All Tabs Button (when report tabs exist) */}
-          {tabs.some(tab => tab.type === 'report') && (
-            <button
-              onClick={handleCloseAllReportTabs}
-              className="px-3 py-1.5 text-sm border rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-              style={{
-                borderColor: '#ef4444',
-                color: '#ef4444',
-                backgroundColor: 'var(--surface)'
-              }}
-            >
-              Close All Reports
-            </button>
-          )}
+          <div className="flex items-center space-x-2">
+            {/* Comparison View Toggle */}
+            {tabs.some(tab => tab.type === 'strategy') && (
+              <button
+                onClick={handleToggleComparisonView}
+                className={`px-3 py-1.5 text-sm border rounded transition-colors ${
+                  useComparisonView ? 'ring-2' : 'hover:bg-opacity-50'
+                }`}
+                style={{
+                  borderColor: useComparisonView ? 'var(--accent)' : 'var(--border)',
+                  color: useComparisonView ? 'var(--accent)' : 'var(--text-primary)',
+                  backgroundColor: useComparisonView ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface)',
+                  ringColor: 'var(--accent)'
+                }}
+                title={useComparisonView ? 'Exit comparison view' : 'Switch to comparison view'}
+              >
+                <Layout size={16} style={{ marginRight: '4px' }} />
+                {useComparisonView ? 'Exit Compare' : 'Compare View'}
+              </button>
+            )}
+            
+            {/* Close All Tabs Button (when strategy tabs exist) */}
+            {tabs.some(tab => tab.type === 'strategy') && (
+              <button
+                onClick={handleCloseAllStrategyTabs}
+                className="px-3 py-1.5 text-sm border rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                style={{
+                  borderColor: '#ef4444',
+                  color: '#ef4444',
+                  backgroundColor: 'var(--surface)'
+                }}
+              >
+                Close All Strategies
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Tab Bar */}
-        {tabs.length > 1 && (
+        {/* Tab Bar - Only show in normal tabbed view */}
+        {!useComparisonView && !useMultiStrategyView && tabs.length > 1 && (
           <div className="px-6">
             <div className="flex items-center space-x-1 overflow-hidden">
               {/* Visible Tabs */}
@@ -317,40 +463,59 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
 
       {/* Tab Content */}
       <div className="flex-1">
-        {activeTab?.type === 'library' ? (
-          <div className="max-w-7xl mx-auto">
-            <Library 
-              onBack={onBack} 
-              onCompareSelected={onCompareSelected}
-              onReportOpen={handleOpenReport}
-              initialSearchTerm={initialSearchTerm}
-            />
-          </div>
-        ) : activeTab?.type === 'report' && activeTab.data ? (
-          <ReportScreen 
-            backtest={activeTab.data}
-            onBack={() => setActiveTabId('library')}
+        {useMultiStrategyView && multiStrategyViewStrategies.length > 0 ? (
+          <MultiStrategyViewScreen
+            strategies={multiStrategyViewStrategies}
+            onBack={() => {
+              setUseMultiStrategyView(false);
+              setMultiStrategyViewStrategies([]);
+              setActiveTabId('library');
+            }}
+          />
+        ) : useComparisonView && comparisonStrategies.length > 0 ? (
+          <ComparisonViewContainer
+            strategies={comparisonStrategies}
+            onStrategySelect={(strategy) => {
+              console.log('Strategy selected:', strategy);
+            }}
+            onBack={() => {
+              setUseComparisonView(false);
+              setComparisonStrategies([]);
+              setActiveTabId('library');
+            }}
+            className="h-full"
           />
         ) : (
-          <div className="flex items-center justify-center h-96">
-            <div className="text-center">
-              <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                Tab not found
-              </h3>
-              <p style={{ color: 'var(--text-secondary)' }}>
-                The requested tab could not be displayed.
-              </p>
-              <button
-                onClick={() => setActiveTabId('library')}
-                className="mt-4 px-4 py-2 rounded-lg transition-colors"
-                style={{
-                  backgroundColor: 'var(--accent)',
-                  color: 'var(--bg-primary)'
-                }}
-              >
-                Return to Library
-              </button>
-            </div>
+          // Traditional tabbed view
+          <div className="h-full">
+            {activeTab?.type === 'library' ? (
+              <div className="max-w-7xl mx-auto h-full">
+                {libraryComponent}
+              </div>
+            ) : activeTab?.component ? (
+              activeTab.component
+            ) : (
+              <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                    Tab not found
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)' }}>
+                    The requested tab could not be displayed.
+                  </p>
+                  <button
+                    onClick={() => setActiveTabId('library')}
+                    className="mt-4 px-4 py-2 rounded-lg transition-colors"
+                    style={{
+                      backgroundColor: 'var(--accent)',
+                      color: 'var(--bg-primary)'
+                    }}
+                  >
+                    Return to Library
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

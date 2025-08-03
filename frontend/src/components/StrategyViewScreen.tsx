@@ -6,9 +6,18 @@ import StageAnalysisChart from './StageAnalysisChart';
 interface StrategyViewScreenProps {
   strategy: RecentRun;
   onBack: () => void;
+  chartOnly?: boolean;
+  onChartClick?: () => void;
+  isActive?: boolean;
 }
 
-const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ strategy, onBack }) => {
+const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ 
+  strategy, 
+  onBack, 
+  chartOnly = false, 
+  onChartClick, 
+  isActive = false 
+}) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['performance']));
   const [viewMode, setViewMode] = useState<'single' | 'portfolio'>('single');
@@ -124,6 +133,146 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ strategy, onBac
     { label: 'Calmar Ratio', value: strategy.calmarRatio.toFixed(2), color: 'var(--text-primary)' }
   ];
 
+  // Chart-only mode for split view
+  if (chartOnly) {
+    return (
+      <div 
+        className={`h-full flex flex-col border rounded-lg cursor-pointer transition-all duration-200 ${
+          isActive ? 'ring-2 ring-opacity-75' : 'hover:shadow-md'
+        }`}
+        style={{
+          backgroundColor: 'var(--surface)',
+          borderColor: isActive ? 'var(--accent)' : 'var(--border)',
+          ringColor: isActive ? 'var(--accent)' : 'transparent'
+        }}
+        onClick={onChartClick}
+      >
+        {/* Chart Header */}
+        <div 
+          className={`px-4 py-2 border-b transition-colors ${
+            isActive ? 'bg-opacity-10' : ''
+          }`}
+          style={{ 
+            borderColor: 'var(--border)',
+            backgroundColor: isActive ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <BarChart3 
+                  size={16} 
+                  style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }} 
+                />
+                <h3 
+                  className="font-semibold text-sm"
+                  style={{ color: isActive ? 'var(--accent)' : 'var(--text-primary)' }}
+                >
+                  {strategy.name} {strategy.version}
+                </h3>
+              </div>
+              <div 
+                className="text-xs px-2 py-1 rounded"
+                style={{ 
+                  backgroundColor: 'var(--bg-primary)',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                {strategy.symbol}
+              </div>
+            </div>
+            
+            {/* Key Metrics */}
+            <div className="flex items-center space-x-4 text-xs">
+              <div className="flex items-center space-x-1">
+                <TrendingUp size={12} style={{ color: 'var(--text-secondary)' }} />
+                <span 
+                  className="font-medium"
+                  style={{ color: strategy.totalReturn >= 0 ? '#10b981' : '#ef4444' }}
+                >
+                  {strategy.totalReturn >= 0 ? '+' : ''}{strategy.totalReturn.toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Target size={12} style={{ color: 'var(--text-secondary)' }} />
+                <span style={{ color: 'var(--text-secondary)' }}>
+                  {strategy.winRate.toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chart Area */}
+        <div className="flex-1 p-4">
+          <div 
+            className="h-full rounded border flex items-center justify-center relative overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border)'
+            }}
+          >
+            {/* Chart Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <svg width="100%" height="100%">
+                <defs>
+                  <pattern id={`grid-${strategy.id}`} width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path 
+                      d="M 20 0 L 0 0 0 20" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="0.5"
+                      style={{ color: 'var(--text-secondary)' }}
+                    />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#grid-${strategy.id})`} />
+              </svg>
+            </div>
+
+            {/* Chart Content */}
+            <div className="relative z-10 w-full h-full">
+              <StageAnalysisChart
+                data={generateMockChartData()}
+                symbol={strategy.symbol}
+                selectedTimeframe={strategy.timeframe}
+                showBenchmark={false}
+              />
+            </div>
+
+            {/* Active Indicator */}
+            {isActive && (
+              <div className="absolute top-2 right-2">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                  title="Active strategy"
+                />
+              </div>
+            )}
+
+            {/* Click to Focus Indicator */}
+            {!isActive && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-5 transition-all">
+                <div 
+                  className="text-xs px-3 py-1 rounded-full border opacity-0 hover:opacity-100 transition-opacity"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--accent)',
+                    color: 'var(--accent)'
+                  }}
+                >
+                  Click to focus
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Full strategy view mode
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Minimal Header */}
