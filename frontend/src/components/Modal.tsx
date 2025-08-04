@@ -6,7 +6,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large' | 'xlarge';
 }
 
 const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 'medium' }) => {
@@ -33,7 +33,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
   const sizeClasses = {
     small: 'max-w-md',
     medium: 'max-w-2xl',
-    large: 'max-w-4xl'
+    large: 'max-w-4xl',
+    xlarge: 'w-[950px] max-w-[950px]'
   };
 
   return (
@@ -47,10 +48,12 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className={`relative ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto rounded-lg border shadow-xl`}
+          className={`relative ${sizeClasses[size]} w-full max-h-[90vh] overflow-y-auto rounded-lg border shadow-xl scrollbar-dark`}
           style={{
             backgroundColor: 'var(--bg-primary)',
-            borderColor: 'var(--border)'
+            borderColor: 'var(--border)',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#000000 transparent'
           }}
         >
           {/* Header */}

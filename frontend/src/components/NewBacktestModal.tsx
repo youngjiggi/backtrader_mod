@@ -3,6 +3,11 @@ import { Play, ChevronRight, ChevronLeft, Loader2, CheckCircle, XCircle, Save, X
 import Modal from './Modal';
 import { useStrategy } from '../contexts/StrategyContext';
 import WatchlistSelector from './WatchlistSelector';
+import TemplateSelector, { BacktestScenario } from './TemplateSelector';
+import ExistingPortfolioImporter, { PortfolioPosition } from './ExistingPortfolioImporter';
+import SimplifiedIndicatorSelector, { IndicatorConfig } from './SimplifiedIndicatorSelector';
+import HierarchyQuickSetup, { HierarchyConfig } from './HierarchyQuickSetup';
+import EnhancedReviewScreen from './EnhancedReviewScreen';
 
 interface NewBacktestModalProps {
   isOpen: boolean;
@@ -17,29 +22,42 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
   const { addStrategy } = useStrategy();
   const [currentStep, setCurrentStep] = useState(1);
   const [submissionState, setSubmissionState] = useState<SubmissionState>('idle');
+  const [executionProgress, setExecutionProgress] = useState(0);
   const [backtestId, setBacktestId] = useState<string>('');
-  const [formData, setFormData] = useState({
-    symbols: [] as string[],
-    timeframes: ['1d'] as string[],
-    atrPeriod: 14,
-    atrMultiplier: 2,
-    cvdThreshold: 1000,
-    profileBins: [50],
-    relativeVolume: false,
-    atrTrim: false,
-    phaseId: false
+  
+  // Template-based state
+  const [selectedScenario, setSelectedScenario] = useState<BacktestScenario | null>(null);
+  const [symbols, setSymbols] = useState<string[]>([]);
+  const [timeframes, setTimeframes] = useState<string[]>(['1d']);
+  const [existingPortfolio, setExistingPortfolio] = useState<PortfolioPosition[]>([]);
+  const [indicators, setIndicators] = useState<IndicatorConfig[]>([]);
+  const [hierarchy, setHierarchy] = useState<HierarchyConfig>({
+    primarySignal: 'weinstein-stages',
+    secondarySignal: 'rsi',
+    filterSignal: 'atr',
+    rules: [],
+    conflictResolution: 'primary-wins'
   });
-
+  const [executionSettings, setExecutionSettings] = useState({
+    initialCapital: 100000,
+    commission: 5.00,
+    slippage: 0.05
+  });
+  const [runName, setRunName] = useState('');
+  const [notes, setNotes] = useState('');
+  const [showAdvancedIndicators, setShowAdvancedIndicators] = useState(false);
   const [symbolInput, setSymbolInput] = useState('');
 
   const steps = [
-    { number: 1, title: 'Data Selection' },
-    { number: 2, title: 'Strategy Parameters' },
-    { number: 3, title: 'Review & Run' }
+    { number: 1, title: 'Choose Scenario' },
+    { number: 2, title: 'Data Selection' },
+    { number: 3, title: 'Indicators' },
+    { number: 4, title: 'Rules & Hierarchy' },
+    { number: 5, title: 'Review & Execute' }
   ];
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -87,15 +105,15 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
       addStrategy({
         name: strategyName,
         description: strategyDescription,
-        symbol: formData.symbols[0] || '',
-        timeframe: formData.timeframes[0] || '1d',
-        atrPeriod: formData.atrPeriod,
-        atrMultiplier: formData.atrMultiplier,
-        cvdThreshold: formData.cvdThreshold,
-        profileBins: formData.profileBins,
-        relativeVolume: formData.relativeVolume,
-        atrTrim: formData.atrTrim,
-        phaseId: formData.phaseId,
+        symbol: symbols[0] || '',
+        timeframe: timeframes[0] || '1d',
+        atrPeriod: 14,
+        atrMultiplier: 2,
+        cvdThreshold: 1000,
+        profileBins: [50],
+        relativeVolume: false,
+        atrTrim: false,
+        phaseId: false,
         tags: []
       });
       
@@ -108,59 +126,48 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
     setSubmissionState('idle');
     setBacktestId('');
     setSymbolInput('');
-    setFormData({
-      symbols: [],
-      timeframes: ['1d'],
-      atrPeriod: 14,
-      atrMultiplier: 2,
-      cvdThreshold: 1000,
-      profileBins: [50],
-      relativeVolume: false,
-      atrTrim: false,
-      phaseId: false
+    setSelectedScenario(null);
+    setSymbols([]);
+    setTimeframes(['1d']);
+    setExistingPortfolio([]);
+    setIndicators([]);
+    setHierarchy({
+      primarySignal: 'weinstein-stages',
+      secondarySignal: 'rsi',
+      filterSignal: 'atr',
+      rules: [],
+      conflictResolution: 'primary-wins'
     });
+    setRunName('');
+    setNotes('');
+    setShowAdvancedIndicators(false);
   };
 
   const addSymbol = () => {
-    if (symbolInput.trim() && !formData.symbols.includes(symbolInput.trim().toUpperCase())) {
-      setFormData({
-        ...formData,
-        symbols: [...formData.symbols, symbolInput.trim().toUpperCase()]
-      });
+    if (symbolInput.trim() && !symbols.includes(symbolInput.trim().toUpperCase())) {
+      setSymbols([...symbols, symbolInput.trim().toUpperCase()]);
       setSymbolInput('');
     }
   };
 
   const removeSymbol = (symbolToRemove: string) => {
-    setFormData({
-      ...formData,
-      symbols: formData.symbols.filter(symbol => symbol !== symbolToRemove)
-    });
+    setSymbols(symbols.filter(symbol => symbol !== symbolToRemove));
   };
 
   const toggleTimeframe = (timeframe: string) => {
-    const isSelected = formData.timeframes.includes(timeframe);
+    const isSelected = timeframes.includes(timeframe);
     if (isSelected) {
       // Don't allow removing all timeframes
-      if (formData.timeframes.length > 1) {
-        setFormData({
-          ...formData,
-          timeframes: formData.timeframes.filter(tf => tf !== timeframe)
-        });
+      if (timeframes.length > 1) {
+        setTimeframes(timeframes.filter(tf => tf !== timeframe));
       }
     } else {
-      setFormData({
-        ...formData,
-        timeframes: [...formData.timeframes, timeframe]
-      });
+      setTimeframes([...timeframes, timeframe]);
     }
   };
 
-  const handleWatchlistLoad = (symbols: string[]) => {
-    setFormData({
-      ...formData,
-      symbols: [...new Set([...formData.symbols, ...symbols])] // Remove duplicates
-    });
+  const handleWatchlistLoad = (newSymbols: string[]) => {
+    setSymbols([...new Set([...symbols, ...newSymbols])]);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -173,6 +180,15 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
+        return (
+          <TemplateSelector
+            selectedScenario={selectedScenario}
+            onScenarioSelect={setSelectedScenario}
+            onNextStep={handleNext}
+          />
+        );
+      
+      case 2:
         return (
           <div className="space-y-6">
             {/* Symbols Section */}
@@ -226,14 +242,14 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                 </div>
 
                 {/* Selected Symbols */}
-                {formData.symbols.length > 0 && (
+                {symbols.length > 0 && (
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        Selected Symbols ({formData.symbols.length})
+                        Selected Symbols ({symbols.length})
                       </span>
                       <button
-                        onClick={() => setFormData({ ...formData, symbols: [] })}
+                        onClick={() => setSymbols([])}
                         className="text-xs px-2 py-1 rounded transition-colors"
                         style={{
                           color: 'var(--text-secondary)',
@@ -245,7 +261,7 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 border rounded-lg" style={{ borderColor: 'var(--border)' }}>
-                      {formData.symbols.map((symbol) => (
+                      {symbols.map((symbol) => (
                         <span
                           key={symbol}
                           className="flex items-center space-x-1 px-2 py-1 rounded text-sm"
@@ -295,7 +311,7 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                   >
                     <input
                       type="checkbox"
-                      checked={formData.timeframes.includes(timeframe.value)}
+                      checked={timeframes.includes(timeframe.value)}
                       onChange={() => toggleTimeframe(timeframe.value)}
                       className="rounded"
                       style={{ accentColor: 'var(--accent)' }}
@@ -307,176 +323,69 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                 ))}
               </div>
 
-              {formData.timeframes.length > 0 && (
+              {timeframes.length > 0 && (
                 <div className="mt-3 p-2 rounded" style={{ backgroundColor: 'var(--surface)' }}>
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    Selected: {formData.timeframes.join(', ')}
+                    Selected: {timeframes.join(', ')}
                   </span>
                 </div>
               )}
             </div>
-          </div>
-        );
-      
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  ATR Period
-                </label>
-                <input
-                  type="number"
-                  value={formData.atrPeriod}
-                  onChange={(e) => setFormData({ ...formData, atrPeriod: Number(e.target.value) })}
-                  min="1"
-                  max="50"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                  style={{
-                    backgroundColor: 'var(--surface)',
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-primary)',
-                    '--tw-ring-color': 'var(--accent)'
-                  }}
-                />
-              </div>
-              
-              <div>
-                <label
-                  className="block text-sm font-medium mb-2"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  ATR Multiplier
-                </label>
-                <input
-                  type="number"
-                  value={formData.atrMultiplier}
-                  onChange={(e) => setFormData({ ...formData, atrMultiplier: Number(e.target.value) })}
-                  min="0.5"
-                  max="5"
-                  step="0.1"
-                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                  style={{
-                    backgroundColor: 'var(--surface)',
-                    borderColor: 'var(--border)',
-                    color: 'var(--text-primary)',
-                    '--tw-ring-color': 'var(--accent)'
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label
-                className="block text-sm font-medium mb-2"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                CVD Threshold
-              </label>
-              <input
-                type="number"
-                value={formData.cvdThreshold}
-                onChange={(e) => setFormData({ ...formData, cvdThreshold: Number(e.target.value) })}
-                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
-                style={{
-                  backgroundColor: 'var(--surface)',
-                  borderColor: 'var(--border)',
-                  color: 'var(--text-primary)',
-                  '--tw-ring-color': 'var(--accent)'
-                }}
+
+            {/* Existing Portfolio Section */}
+            {selectedScenario && ['existing-plus-new', 'edge-case-study'].includes(selectedScenario.id) && (
+              <ExistingPortfolioImporter
+                positions={existingPortfolio}
+                onPositionsUpdate={setExistingPortfolio}
               />
-            </div>
-            
-            <div className="space-y-4">
-              <h4
-                className="font-medium"
-                style={{ color: 'var(--text-primary)' }}
-              >
-                Additional Options
-              </h4>
-              
-              {[
-                { key: 'relativeVolume', label: 'Relative Volume Filter' },
-                { key: 'atrTrim', label: 'ATR Trim Logic' },
-                { key: 'phaseId', label: 'Phase Identification' }
-              ].map((option) => (
-                <label key={option.key} className="flex items-center space-x-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData[option.key as keyof typeof formData] as boolean}
-                    onChange={(e) => setFormData({ ...formData, [option.key]: e.target.checked })}
-                    className="w-4 h-4 rounded"
-                    style={{ accentColor: 'var(--accent)' }}
-                  />
-                  <span style={{ color: 'var(--text-primary)' }}>
-                    {option.label}
-                  </span>
-                </label>
-              ))}
-            </div>
+            )}
           </div>
         );
       
       case 3:
         return (
+          <SimplifiedIndicatorSelector
+            selectedIndicators={indicators}
+            onIndicatorsUpdate={setIndicators}
+            scenario={selectedScenario?.id as 'new-position' | 'existing-plus-new' | 'edge-case-study' || 'new-position'}
+            showAdvanced={showAdvancedIndicators}
+            onToggleAdvanced={setShowAdvancedIndicators}
+          />
+        );
+
+      case 4:
+        return (
+          <HierarchyQuickSetup
+            config={hierarchy}
+            onConfigUpdate={setHierarchy}
+            availableIndicators={indicators.filter(i => i.enabled).map(i => i.id)}
+            scenario={selectedScenario?.id as 'new-position' | 'existing-plus-new' | 'edge-case-study' || 'new-position'}
+          />
+        );
+
+      case 5:
+        return (
           <div className="space-y-6">
-            <h4
-              className="font-medium text-lg"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              Review Configuration
-            </h4>
-            
-            <div
-              className="p-4 rounded-lg border"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)'
+            <EnhancedReviewScreen
+              data={{
+                scenario: selectedScenario!,
+                symbols,
+                timeframes,
+                existingPortfolio,
+                indicators,
+                hierarchy,
+                executionSettings,
+                runName,
+                notes
               }}
-            >
-              <div className="space-y-3 text-sm">
-                <div>
-                  <span style={{ color: 'var(--text-secondary)' }}>Symbols ({formData.symbols.length}):</span>
-                  <div className="mt-1">
-                    <span className="ml-2" style={{ color: 'var(--text-primary)' }}>
-                      {formData.symbols.length > 0 ? formData.symbols.join(', ') : 'No symbols selected'}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <span style={{ color: 'var(--text-secondary)' }}>Timeframes ({formData.timeframes.length}):</span>
-                  <div className="mt-1">
-                    <span className="ml-2" style={{ color: 'var(--text-primary)' }}>
-                      {formData.timeframes.join(', ')}
-                    </span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>ATR Period:</span>
-                    <span className="ml-2" style={{ color: 'var(--text-primary)' }}>
-                      {formData.atrPeriod}
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ color: 'var(--text-secondary)' }}>ATR Multiplier:</span>
-                    <span className="ml-2" style={{ color: 'var(--text-primary)' }}>
-                      {formData.atrMultiplier}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <span style={{ color: 'var(--text-secondary)' }}>CVD Threshold:</span>
-                  <span className="ml-2" style={{ color: 'var(--text-primary)' }}>
-                    {formData.cvdThreshold}
-                  </span>
-                </div>
-              </div>
-            </div>
+              onDataUpdate={(updates) => {
+                if (updates.runName !== undefined) setRunName(updates.runName);
+                if (updates.notes !== undefined) setNotes(updates.notes);
+                if (updates.executionSettings) setExecutionSettings(updates.executionSettings);
+              }}
+              isExecuting={submissionState === 'submitting'}
+              executionProgress={executionProgress}
+            />
 
             {/* Submission Status */}
             {submissionState !== 'idle' && (
@@ -495,7 +404,7 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
                         Running Backtest...
                       </h4>
                       <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        Analyzing {formData.symbols.length} symbol{formData.symbols.length !== 1 ? 's' : ''} across {formData.timeframes.length} timeframe{formData.timeframes.length !== 1 ? 's' : ''}
+                        Analyzing {symbols.length} symbol{symbols.length !== 1 ? 's' : ''} across {timeframes.length} timeframe{timeframes.length !== 1 ? 's' : ''}
                       </p>
                     </div>
                   </div>
@@ -556,7 +465,7 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="New Backtest">
+    <Modal isOpen={isOpen} onClose={onClose} title="New Backtest" size="xlarge">
       <div className="space-y-6">
         {/* Progress Steps */}
         <div className="flex items-center justify-between">
@@ -615,10 +524,13 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
             Previous
           </button>
           
-          {currentStep < 3 ? (
+          {currentStep < 5 ? (
             <button
               onClick={handleNext}
-              disabled={currentStep === 1 && formData.symbols.length === 0}
+              disabled={
+                (currentStep === 1 && !selectedScenario) ||
+                (currentStep === 2 && symbols.length === 0)
+              }
               className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: 'var(--accent)',
@@ -646,7 +558,7 @@ const NewBacktestModal: React.FC<NewBacktestModalProps> = ({ isOpen, onClose, on
               
               <button
                 onClick={handleSubmit}
-                disabled={formData.symbols.length === 0 || submissionState === 'submitting' || submissionState === 'success'}
+                disabled={symbols.length === 0 || !selectedScenario || submissionState === 'submitting' || submissionState === 'success'}
                 className="px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
                   backgroundColor: 'var(--accent)',
