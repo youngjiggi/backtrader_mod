@@ -12,7 +12,7 @@ interface MultiStrategyViewScreenProps {
 
 const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strategies, onBack }) => {
   const [activeStrategy, setActiveStrategy] = useState<RecentRun>(strategies[0]);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('portfolio');
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['performance']));
   const [viewMode, setViewMode] = useState<'single' | 'portfolio'>('single');
   const [selectedBenchmark, setSelectedBenchmark] = useState('SPY');
@@ -151,14 +151,13 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
   );
 
   const sidebarTabs = [
-    { id: 'overview', label: 'Strategy Info', icon: BarChart3 },
-    { id: 'performance', label: 'Performance', icon: TrendingUp },
-    { id: 'indicators', label: 'Indicators', icon: LineChart },
-    { id: 'stage', label: 'Stage & SATA', icon: PieChart },
     { id: 'portfolio', label: 'Portfolio', icon: Users },
-    { id: 'rules', label: 'Trade Rules', icon: Zap },
+    { id: 'stage', label: 'Stage & SATA', icon: PieChart },
+    { id: 'indicators', label: 'Indicators', icon: LineChart },
+    { id: 'signalhierarchy', label: 'Signal Hierarchy', icon: Zap },
+    { id: 'rules', label: 'Rules', icon: Target },
+    { id: 'performance', label: 'Performance', icon: TrendingUp },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'risk', label: 'Risk Analysis', icon: Target },
     { id: 'history', label: 'History', icon: Calendar }
   ];
 
@@ -392,12 +391,23 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
 
           {/* Sidebar Content - Shows info for active strategy */}
           <div className="flex-1 overflow-y-auto p-4">
-            {activeTab === 'overview' && (
-              <div className="space-y-4">
+            {activeTab === 'portfolio' && (
+              <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Active Strategy Information
+                  <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+                    Portfolio Configuration - {activeStrategy.name}
                   </h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    Define the assets you want to trade and manage your portfolio allocation.
+                  </p>
+                </div>
+
+                {/* Active Strategy Info */}
+                <div>
+                  <h4 className="font-medium mb-3 flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
+                    <Target size={16} />
+                    <span>Active Strategy Details</span>
+                  </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Name:</span>
@@ -422,28 +432,28 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                   </div>
                 </div>
 
-                {activeStrategy.keynote && (
-                  <div>
-                    <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                      Strategy Notes
-                    </h3>
-                    <p className="text-sm italic" style={{ color: 'var(--text-secondary)' }}>
-                      "{activeStrategy.keynote}"
-                    </p>
-                  </div>
-                )}
-
                 {/* Split View Info */}
                 <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+                  <h4 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
                     Split View Overview
-                  </h3>
+                  </h4>
                   <div className="text-sm p-3 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                     <div style={{ color: 'var(--text-secondary)' }}>
                       Comparing {strategies.length} strategies in {gridLayout} layout. Click any chart to view its details in the side panels.
                     </div>
                   </div>
                 </div>
+
+                {activeStrategy.keynote && (
+                  <div>
+                    <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Strategy Notes
+                    </h4>
+                    <p className="text-sm italic" style={{ color: 'var(--text-secondary)' }}>
+                      "{activeStrategy.keynote}"
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
