@@ -136,7 +136,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
     { label: 'Calmar Ratio', value: strategy.calmarRatio.toFixed(2), color: 'var(--text-primary)' }
   ];
 
-  // Chart-only mode for split view
+  // Chart-only mode for split view - minimal display without interactive elements
   if (chartOnly) {
     return (
       <div 
@@ -150,7 +150,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
         }}
         onClick={onChartClick}
       >
-        {/* Chart Header */}
+        {/* Minimal Chart Header - No interactive elements */}
         <div 
           className={`px-4 py-2 border-b transition-colors ${
             isActive ? 'bg-opacity-10' : ''
@@ -167,14 +167,14 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                   size={16} 
                   style={{ color: isActive ? 'var(--accent)' : 'var(--text-secondary)' }} 
                 />
-                <h3 
+                <span 
                   className="font-semibold text-sm"
                   style={{ color: isActive ? 'var(--accent)' : 'var(--text-primary)' }}
                 >
                   {strategy.name} {strategy.version}
-                </h3>
+                </span>
               </div>
-              <div 
+              <span 
                 className="text-xs px-2 py-1 rounded"
                 style={{ 
                   backgroundColor: 'var(--bg-primary)',
@@ -182,10 +182,10 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                 }}
               >
                 {strategy.symbol}
-              </div>
+              </span>
             </div>
             
-            {/* Key Metrics */}
+            {/* Key Metrics - Static display only */}
             <div className="flex items-center space-x-4 text-xs">
               <div className="flex items-center space-x-1">
                 <TrendingUp size={12} style={{ color: 'var(--text-secondary)' }} />
@@ -254,9 +254,9 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
               </div>
             )}
 
-            {/* Click to Focus Indicator */}
+            {/* Click to Focus Indicator - Non-interactive overlay */}
             {!isActive && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-5 transition-all">
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-5 transition-all pointer-events-none">
                 <div 
                   className="text-xs px-3 py-1 rounded-full border opacity-0 hover:opacity-100 transition-opacity"
                   style={{
@@ -357,6 +357,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
               <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Symbol:</span>
               <select
                 value={strategy.symbol}
+                readOnly
                 className="px-2 py-1 text-sm rounded border bg-transparent"
                 style={{
                   backgroundColor: 'var(--surface)',
@@ -377,6 +378,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
               <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>Timeframe:</span>
               <select
                 value={strategy.timeframe}
+                readOnly
                 className="px-2 py-1 text-sm rounded border bg-transparent"
                 style={{
                   backgroundColor: 'var(--surface)',
@@ -400,6 +402,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                 <input
                   type="date"
                   value={strategy.startDate}
+                  readOnly
                   className="px-2 py-1 text-xs rounded border bg-transparent"
                   style={{
                     backgroundColor: 'var(--surface)',
@@ -411,6 +414,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                 <input
                   type="date"
                   value={strategy.endDate}
+                  readOnly
                   className="px-2 py-1 text-xs rounded border bg-transparent"
                   style={{
                     backgroundColor: 'var(--surface)',
@@ -650,13 +654,13 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                     
                     {/* Current Watchlist */}
                     <div className="space-y-2">
-                      {[strategy.symbol, 'AAPL', 'TSLA', 'NVDA'].map((symbol, index) => (
-                        <div key={symbol} className="flex items-center justify-between p-2 rounded border" 
+                      {[strategy.symbol, 'AAPL', 'TSLA', 'NVDA'].filter((symbol, index, arr) => arr.indexOf(symbol) === index).map((symbol, index) => (
+                        <div key={`watchlist-${symbol}`} className="flex items-center justify-between p-2 rounded border" 
                           style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                           <div className="flex items-center space-x-3">
                             <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{symbol}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded ${index === 0 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
-                              {index === 0 ? 'Primary' : 'Watchlist'}
+                            <span className={`text-xs px-2 py-0.5 rounded ${symbol === strategy.symbol ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                              {symbol === strategy.symbol ? 'Primary' : 'Watchlist'}
                             </span>
                           </div>
                           <button className="text-red-500 hover:bg-red-50 p-1 rounded text-xs">Remove</button>
@@ -1515,7 +1519,7 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
                     </div>
                     <div className="space-y-2">
                       {['AAPL', 'TSLA', 'NVDA', 'MSFT'].map((symbol, index) => (
-                        <div key={symbol} className="flex items-center justify-between p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                        <div key={`short-watchlist-${symbol}`} className="flex items-center justify-between p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                           <div className="flex items-center space-x-2">
                             <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{symbol}</span>
                             <span className={`text-xs px-1 rounded ${index < 2 ? 'text-green-600 bg-green-100' : 'text-yellow-600 bg-yellow-100'}`}>
