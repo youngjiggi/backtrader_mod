@@ -270,6 +270,37 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({
               </div>
             )}
           </div>
+
+          {/* Quick Stats Below Chart */}
+          <div className="mt-3 grid grid-cols-3 gap-3 text-xs">
+            <div className="text-center">
+              <div style={{ color: 'var(--text-secondary)' }}>Sharpe</div>
+              <div 
+                className="font-medium"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {strategy.sharpe.toFixed(2)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div style={{ color: 'var(--text-secondary)' }}>Max DD</div>
+              <div 
+                className="font-medium"
+                style={{ color: '#ef4444' }}
+              >
+                {strategy.maxDrawdown.toFixed(1)}%
+              </div>
+            </div>
+            <div className="text-center">
+              <div style={{ color: 'var(--text-secondary)' }}>Trades</div>
+              <div 
+                className="font-medium"
+                style={{ color: 'var(--text-primary)' }}
+              >
+                {strategy.totalTrades}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

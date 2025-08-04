@@ -140,27 +140,14 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
   );
 
   const renderStrategyChart = (strategy: RecentRun, index: number) => (
-    <div
+    <StrategyViewScreen
       key={strategy.id}
-      className={`border rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
-        activeStrategy.id === strategy.id ? 'ring-2 ring-opacity-75' : 'hover:shadow-md'
-      }`}
-      style={{
-        backgroundColor: 'var(--surface)',
-        borderColor: activeStrategy.id === strategy.id ? 'var(--accent)' : 'var(--border)',
-        ringColor: activeStrategy.id === strategy.id ? 'var(--accent)' : 'transparent'
-      }}
-      onClick={() => handleStrategySelect(strategy)}
-    >
-      {/* Use StrategyViewScreen in chartOnly mode */}
-      <StrategyViewScreen
-        strategy={strategy}
-        onBack={() => {}} // Not used in chartOnly mode
-        chartOnly={true}
-        onChartClick={() => handleStrategySelect(strategy)}
-        isActive={activeStrategy.id === strategy.id}
-      />
-    </div>
+      strategy={strategy}
+      onBack={() => {}} // Not used in chartOnly mode
+      chartOnly={true}
+      onChartClick={() => handleStrategySelect(strategy)}
+      isActive={activeStrategy.id === strategy.id}
+    />
   );
 
   const sidebarTabs = [
