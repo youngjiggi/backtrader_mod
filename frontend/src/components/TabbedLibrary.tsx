@@ -91,37 +91,193 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
     keynote: string;
   }
 
-  const convertToStrategyData = (libraryData: LibraryBacktestData): RecentRun => ({
-    id: libraryData.id,
-    name: libraryData.name,
-    version: libraryData.version,
-    symbol: libraryData.symbol,
-    timeframe: libraryData.timeframe,
-    startDate: '2024-01-01',
-    endDate: libraryData.date,
-    totalReturn: libraryData.totalReturn,
-    winRate: libraryData.winRate,
-    sharpe: libraryData.sharpe,
-    maxDrawdown: libraryData.maxDrawdown,
-    totalTrades: 1247,
-    avgHoldTime: '3.2d',
-    profitFactor: 1.65,
-    calmarRatio: 2.1,
-    completedAt: libraryData.date,
-    keynote: libraryData.keynote,
-    strategySettings: {
-      atrPeriod: 14,
-      atrMultiplier: 2.0,
-      cvdThreshold: 0.5,
-      rsiPeriod: 14,
-      rsiOversold: 30,
-      rsiOverbought: 70,
-      stopLoss: 2.0,
-      takeProfit: 4.0,
-      positionSize: 100,
-      maxPositions: 5
-    }
-  });
+  const convertToStrategyData = (libraryData: LibraryBacktestData): RecentRun => {
+    const startingBalance = 100000;
+    const endingBalance = startingBalance * (1 + libraryData.totalReturn / 100);
+    const totalTrades = Math.floor(Math.random() * 500 + 50);
+    const winningTrades = Math.floor(totalTrades * (libraryData.winRate / 100));
+    const losingTrades = totalTrades - winningTrades;
+    
+    return {
+      id: libraryData.id,
+      name: libraryData.name,
+      version: libraryData.version,
+      symbol: libraryData.symbol,
+      timeframe: libraryData.timeframe,
+      startDate: '2024-01-01',
+      endDate: libraryData.date,
+      totalReturn: libraryData.totalReturn,
+      winRate: libraryData.winRate,
+      sharpe: libraryData.sharpe,
+      maxDrawdown: libraryData.maxDrawdown,
+      totalTrades: totalTrades,
+      avgHoldTime: '3.2d',
+      profitFactor: 1.65,
+      calmarRatio: 2.1,
+      completedAt: libraryData.date,
+      keynote: libraryData.keynote,
+      strategySettings: {
+        atrPeriod: 14,
+        atrMultiplier: 2.0,
+        cvdThreshold: 0.5,
+        rsiPeriod: 14,
+        rsiOversold: 30,
+        rsiOverbought: 70,
+        stopLoss: 2.0,
+        takeProfit: 4.0,
+        positionSize: 100,
+        maxPositions: 5
+      },
+      periodData: {
+        '1M': {
+          totalReturn: libraryData.totalReturn * 0.2,
+          winRate: libraryData.winRate * 0.9,
+          sharpe: libraryData.sharpe * 0.8,
+          maxDrawdown: libraryData.maxDrawdown * 0.6,
+          totalTrades: Math.floor(totalTrades * 0.15),
+          avgHoldTime: '2.8d',
+          profitFactor: 1.45,
+          calmarRatio: 1.8
+        }
+      },
+      // Comprehensive backtesting data
+      accountData: {
+        startingBalance,
+        endingBalance,
+        peakBalance: endingBalance * 1.15,
+        balanceProgression: Array.from({ length: 50 }, (_, i) => {
+          const date = new Date(2024, 0, 1 + i * 7).toISOString().split('T')[0];
+          const progress = i / 49;
+          const balance = startingBalance + (endingBalance - startingBalance) * progress + (Math.random() - 0.5) * 5000;
+          return {
+            date,
+            balance,
+            equity: balance * (1 + (Math.random() - 0.5) * 0.02),
+            drawdown: Math.random() * libraryData.maxDrawdown * 0.01
+          };
+        }),
+        totalCommissions: endingBalance * 0.002,
+        totalSlippage: endingBalance * 0.001
+      },
+      tradeJournal: {
+        entries: Array.from({ length: totalTrades }, (_, i) => ({
+          id: `entry-${i}`,
+          date: new Date(2024, 0, 1 + Math.random() * 365).toISOString(),
+          type: Math.random() > 0.5 ? 'long' : 'short',
+          price: 100 + Math.random() * 50,
+          size: Math.floor(Math.random() * 500 + 100),
+          reason: ['ATR Breakout', 'RSI Oversold', 'VWAP Support', 'Stage 2 Entry'][Math.floor(Math.random() * 4)],
+          signal: ['Strong Buy', 'Buy', 'Accumulate'][Math.floor(Math.random() * 3)],
+          confidence: Math.random() * 0.4 + 0.6
+        })),
+        exits: Array.from({ length: totalTrades - 10 }, (_, i) => ({
+          id: `exit-${i}`,
+          entryId: `entry-${i}`,
+          date: new Date(2024, 0, 1 + Math.random() * 365).toISOString(),
+          price: 100 + Math.random() * 50,
+          size: Math.floor(Math.random() * 500 + 100),
+          reason: ['Take Profit', 'Stop Loss', 'Time Exit', 'Signal Reversal'][Math.floor(Math.random() * 4)],
+          signal: ['Exit', 'Stop', 'Trim'][Math.floor(Math.random() * 3)],
+          pnl: (Math.random() - 0.3) * 2000,
+          pnlPercent: (Math.random() - 0.3) * 15,
+          holdTime: `${Math.floor(Math.random() * 10 + 1)}.${Math.floor(Math.random() * 10)}d`
+        })),
+        openPositions: Array.from({ length: 10 }, (_, i) => ({
+          id: `open-${i}`,
+          entryDate: new Date(2024, 11, 1 + Math.random() * 30).toISOString(),
+          type: Math.random() > 0.5 ? 'long' : 'short',
+          entryPrice: 100 + Math.random() * 50,
+          currentPrice: 100 + Math.random() * 50,
+          size: Math.floor(Math.random() * 500 + 100),
+          unrealizedPnl: (Math.random() - 0.5) * 1000,
+          holdTime: `${Math.floor(Math.random() * 30 + 1)}d`
+        }))
+      },
+      strategyDefinition: {
+        logic: "Multi-timeframe momentum strategy combining ATR-based position sizing with RSI mean reversion signals. Enters positions when price breaks above/below ATR bands with confirming volume and RSI divergence patterns.",
+        entryConditions: [
+          "Price closes above ATR upper band",
+          "RSI(14) < 70 (not overbought)",
+          "Volume > 1.5x 20-day average",
+          "CVD threshold exceeded",
+          "No conflicting higher timeframe signals"
+        ],
+        exitConditions: [
+          "Stop loss: 2x ATR below entry",
+          "Take profit: 4x ATR above entry",
+          "RSI(14) > 80 (overbought exit)",
+          "Volume drops below 0.8x average",
+          "Maximum hold time: 10 days"
+        ],
+        riskManagement: {
+          stopLossType: 'atr',
+          takeProfitType: 'risk_reward',
+          maxRiskPerTrade: 2.0,
+          positionSizing: 'volatility_adjusted'
+        },
+        filters: [
+          "Market cap > $1B",
+          "Average volume > 1M shares",
+          "No earnings announcements within 2 days",
+          "Beta between 0.5 and 2.0"
+        ],
+        timeRestrictions: {
+          tradingHours: "09:30 - 16:00 EST",
+          excludedDays: [],
+          excludedDates: []
+        }
+      },
+      enhancedMetrics: {
+        // Risk metrics
+        valueAtRisk: libraryData.totalReturn * -0.15,
+        conditionalValueAtRisk: libraryData.totalReturn * -0.22,
+        maximumDrawdownDays: Math.floor(Math.random() * 45 + 15),
+        recoveryFactor: libraryData.totalReturn / libraryData.maxDrawdown,
+        ulcerIndex: Math.abs(libraryData.maxDrawdown * 0.7),
+        
+        // Return metrics
+        annualizedReturn: libraryData.totalReturn * 1.2,
+        monthlyReturns: Array.from({ length: 12 }, (_, i) => ({
+          month: new Date(2024, i).toLocaleDateString('en-US', { month: 'short' }),
+          return: (Math.random() - 0.5) * 20
+        })),
+        bestMonth: { month: 'Mar', return: 15.8 },
+        worstMonth: { month: 'Aug', return: -8.4 },
+        positiveMonths: 8,
+        
+        // Consistency metrics
+        winStreakMax: Math.floor(Math.random() * 8 + 3),
+        loseStreakMax: Math.floor(Math.random() * 4 + 1),
+        consistency: Math.min(0.95, libraryData.sharpe / 2 + 0.5),
+        stabilityRatio: Math.max(0.1, Math.min(0.9, libraryData.sharpe / 3 + 0.3)),
+        
+        // Benchmark comparison
+        benchmarkCorrelation: Math.random() * 0.6 + 0.2,
+        beta: Math.random() * 1.5 + 0.5,
+        alpha: libraryData.totalReturn - (Math.random() * 10 + 5),
+        trackingError: Math.random() * 5 + 2,
+        informationRatio: libraryData.sharpe * 0.8
+      },
+      executionDetails: {
+        totalSignals: totalTrades + Math.floor(Math.random() * 50),
+        signalsActioned: totalTrades,
+        missedOpportunities: Math.floor(Math.random() * 20),
+        slippageStats: {
+          avgSlippage: Math.random() * 0.05,
+          maxSlippage: Math.random() * 0.15,
+          totalSlippageCost: endingBalance * 0.001
+        },
+        commissionStats: {
+          avgCommission: 5 + Math.random() * 10,
+          totalCommissions: endingBalance * 0.002
+        },
+        latencyStats: {
+          avgOrderLatency: Math.random() * 100 + 50,
+          maxOrderLatency: Math.random() * 500 + 200
+        }
+      }
+    };
+  };
 
   // State for tabs - initialized after function definitions
   const [tabs, setTabs] = useState<Tab[]>([]);

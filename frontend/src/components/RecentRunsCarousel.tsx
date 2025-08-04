@@ -46,6 +46,109 @@ export interface RecentRun {
       calmarRatio: number;
     }
   };
+  // Comprehensive backtesting data
+  accountData?: {
+    startingBalance: number;
+    endingBalance: number;
+    peakBalance: number;
+    balanceProgression: { date: string; balance: number; equity: number; drawdown: number }[];
+    totalCommissions: number;
+    totalSlippage: number;
+  };
+  tradeJournal?: {
+    entries: {
+      id: string;
+      date: string;
+      type: 'long' | 'short';
+      price: number;
+      size: number;
+      reason: string;
+      signal: string;
+      confidence: number;
+    }[];
+    exits: {
+      id: string;
+      entryId: string;
+      date: string;
+      price: number;
+      size: number;
+      reason: string;
+      signal: string;
+      pnl: number;
+      pnlPercent: number;
+      holdTime: string;
+    }[];
+    openPositions: {
+      id: string;
+      entryDate: string;
+      type: 'long' | 'short';
+      entryPrice: number;
+      currentPrice: number;
+      size: number;
+      unrealizedPnl: number;
+      holdTime: string;
+    }[];
+  };
+  strategyDefinition?: {
+    logic: string;
+    entryConditions: string[];
+    exitConditions: string[];
+    riskManagement: {
+      stopLossType: 'fixed' | 'atr' | 'trailing';
+      takeProfitType: 'fixed' | 'risk_reward' | 'trailing';
+      maxRiskPerTrade: number;
+      positionSizing: 'fixed' | 'percent_balance' | 'volatility_adjusted';
+    };
+    filters: string[];
+    timeRestrictions?: {
+      tradingHours: string;
+      excludedDays: string[];
+      excludedDates: string[];
+    };
+  };
+  enhancedMetrics?: {
+    // Risk metrics
+    valueAtRisk: number;
+    conditionalValueAtRisk: number;
+    maximumDrawdownDays: number;
+    recoveryFactor: number;
+    ulcerIndex: number;
+    // Return metrics
+    annualizedReturn: number;
+    monthlyReturns: { month: string; return: number }[];
+    bestMonth: { month: string; return: number };
+    worstMonth: { month: string; return: number };
+    positiveMonths: number;
+    // Consistency metrics  
+    winStreakMax: number;
+    loseStreakMax: number;
+    consistency: number;
+    stabilityRatio: number;
+    // Benchmark comparison
+    benchmarkCorrelation: number;
+    beta: number;
+    alpha: number;
+    trackingError: number;
+    informationRatio: number;
+  };
+  executionDetails?: {
+    totalSignals: number;
+    signalsActioned: number;
+    missedOpportunities: number;
+    slippageStats: {
+      avgSlippage: number;
+      maxSlippage: number;
+      totalSlippageCost: number;
+    };
+    commissionStats: {
+      avgCommission: number;
+      totalCommissions: number;
+    };
+    latencyStats?: {
+      avgOrderLatency: number;
+      maxOrderLatency: number;
+    };
+  };
 }
 
 interface RecentRunsCarouselProps {
