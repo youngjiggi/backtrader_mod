@@ -35,7 +35,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     {
       id: 'new-position',
       title: 'New Position(s)',
-      subtitle: 'I found something early or kind of late',
+      subtitle: 'Entry optimization and position management',
       description: 'What does an ideal entry look like? If I get in, how should I manage it?',
       icon: <Target size={24} />,
       features: [
@@ -57,8 +57,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     {
       id: 'existing-plus-new',
       title: 'Existing Position(s) + New',
-      subtitle: 'I want to know if I can do better',
-      description: 'Test improvements to current holdings and explore new opportunities.',
+      subtitle: 'Portfolio optimization and enhancement',
+      description: 'I want to know if I can do better.',
       icon: <TrendingUp size={24} />,
       features: [
         'Load existing strategy from library',
@@ -79,7 +79,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     {
       id: 'edge-case-study',
       title: 'Proactive Study / Edge Case',
-      subtitle: 'Test edge cases and unusual scenarios',
+      subtitle: 'Stress testing and unusual scenarios',
       description: 'Can my strategy handle bad overreactions, macro dips, or sudden moves?',
       icon: <Brain size={24} />,
       features: [
@@ -113,10 +113,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   return (
     <div className={`space-y-6 ${className}`}>
       <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+        <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
           What do you want to test?
         </h2>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
           Choose a scenario to get started with a pre-configured template
         </p>
       </div>
@@ -149,10 +149,10 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   {scenario.icon}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <h3 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
                     {scenario.title}
                   </h3>
-                  <p className="text-sm font-medium" style={{ color: 'var(--highlight)' }}>
+                  <p className="text-base font-medium" style={{ color: 'var(--highlight)' }}>
                     {scenario.subtitle}
                   </p>
                 </div>
@@ -180,16 +180,16 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             {/* Content */}
             <div className="space-y-4">
 
-              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-base mb-4" style={{ color: 'var(--text-secondary)' }}>
                 {scenario.description}
               </p>
 
               {/* Features */}
               <div className="mb-4">
-                <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
+                <h4 className="text-base font-medium mb-3" style={{ color: 'var(--text-primary)' }}>
                   What's included:
                 </h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   {scenario.features.map((feature, index) => (
                     <div key={index} className="flex items-start space-x-2">
                       <span className="text-green-500 mt-0.5 font-bold">•</span>
@@ -200,7 +200,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
               </div>
 
               {/* Meta Info */}
-              <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center space-x-1">
                   <span style={{ color: 'var(--text-secondary)' }}>Complexity:</span>
                   <span 
@@ -231,11 +231,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
           borderColor: 'var(--border)' 
         }}
       >
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+        <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
           💡 Don't worry - you can customize everything in the next steps. These templates just give you a head start!
         </p>
         {selectedScenario && (
-          <p className="text-xs mt-2" style={{ color: 'var(--accent)' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--accent)' }}>
             ✓ {selectedScenario.title} selected - Click the arrow (→) or Next to continue
           </p>
         )}

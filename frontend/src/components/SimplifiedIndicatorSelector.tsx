@@ -169,7 +169,7 @@ const SimplifiedIndicatorSelector: React.FC<SimplifiedIndicatorSelectorProps> = 
       category: 'volume',
       description: 'Cumulative volume indicator for trend confirmation',
       enabled: false,
-      isAdvanced: scenario === 'edge-case-study',
+      isAdvanced: false,
       settings: {
         smoothing: 0
       },
@@ -268,19 +268,19 @@ const SimplifiedIndicatorSelector: React.FC<SimplifiedIndicatorSelectorProps> = 
       case 'new-position':
         return defaults.map(ind => ({
           ...ind,
-          enabled: ['sma', 'vwap', 'rsi', 'volume-profile', 'cvd', 'atr', 'weinstein-stages'].includes(ind.id)
+          enabled: ['sma', 'vwap', 'rsi', 'volume-profile', 'cvd', 'obv', 'atr', 'weinstein-stages'].includes(ind.id)
         }));
       
       case 'existing-plus-new':
         return defaults.map(ind => ({
           ...ind,
-          enabled: ['sma', 'vwap', 'rsi', 'macd', 'volume-profile', 'cvd', 'atr', 'bollinger-bands', 'weinstein-stages'].includes(ind.id)
+          enabled: ['sma', 'vwap', 'rsi', 'macd', 'volume-profile', 'cvd', 'obv', 'atr', 'bollinger-bands', 'weinstein-stages'].includes(ind.id)
         }));
       
       case 'edge-case-study':
         return defaults.map(ind => ({
           ...ind,
-          enabled: !ind.isAdvanced ? ['sma', 'vwap', 'rsi', 'volume-profile', 'cvd', 'atr', 'weinstein-stages'].includes(ind.id) : ind.enabled
+          enabled: !ind.isAdvanced ? ['sma', 'vwap', 'rsi', 'volume-profile', 'cvd', 'obv', 'atr', 'weinstein-stages'].includes(ind.id) : ind.enabled
         }));
       
       default:

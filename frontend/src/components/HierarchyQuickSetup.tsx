@@ -53,9 +53,10 @@ const HierarchyQuickSetup: React.FC<HierarchyQuickSetupProps> = ({
     { id: 'vwap', name: 'VWAP' },
     { id: 'volume-profile', name: 'Volume Profile' },
     { id: 'cvd', name: 'CVD' },
+    { id: 'obv', name: 'OBV' },
     { id: 'atr', name: 'ATR' },
     { id: 'macd', name: 'MACD' },
-    { id: 'obv', name: 'OBV' },
+    { id: 'bollinger-bands', name: 'Bollinger Bands' },
     { id: 'relative-volume', name: 'Relative Volume' }
   ].filter(opt => availableIndicators.includes(opt.id));
 

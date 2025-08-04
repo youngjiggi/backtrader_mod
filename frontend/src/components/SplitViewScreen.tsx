@@ -1,23 +1,30 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ArrowLeft, Settings, TrendingUp, BarChart3, Activity, Target, DollarSign, Calendar, ChevronDown, ChevronUp, Play, Cog, Users, TrendingDown, AlertTriangle, Zap, LineChart, PieChart, Brain, CheckCircle, XCircle, Clock, GripVertical, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Grid, Square, Columns, Rows } from 'lucide-react';
 import { RecentRun } from './RecentRunsCarousel';
-import StrategyViewScreen from './StrategyViewScreen';
+import StageAnalysisChart from './StageAnalysisChart';
 
-export type ChartGridLayout = '1x1' | '2x1' | '1x2' | '2x2';
+export type SplitLayout = '1x1' | '2x1' | '1x2' | '2x2';
 
-interface MultiStrategyViewScreenProps {
-  strategies: RecentRun[];
+interface SplitViewScreenProps {
+  strategy: RecentRun;
   onBack: () => void;
 }
 
-const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strategies, onBack }) => {
-  const [activeStrategy, setActiveStrategy] = useState<RecentRun>(strategies[0]);
+interface TimeframeView {
+  id: string;
+  label: string;
+  timeframe: string;
+  active: boolean;
+}
+
+const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['performance']));
   const [viewMode, setViewMode] = useState<'single' | 'portfolio'>('single');
   const [selectedBenchmark, setSelectedBenchmark] = useState('SPY');
-  const [gridLayout, setGridLayout] = useState<ChartGridLayout>('2x1');
+  const [layout, setLayout] = useState<SplitLayout>('2x2');
   const [showLayoutSelector, setShowLayoutSelector] = useState(false);
+  const [activeChart, setActiveChart] = useState('1D');
   
   // Panel state management
   const [leftPanelWidth, setLeftPanelWidth] = useState(320);
@@ -33,7 +40,15 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
   const bottomResizeRef = useRef<HTMLDivElement>(null);
   const isResizing = useRef<string | null>(null);
 
-  const gridLayoutConfigs = {
+  // Available timeframes for the same strategy
+  const timeframes: TimeframeView[] = [
+    { id: '1D', label: '1 Day', timeframe: '1D', active: activeChart === '1D' },
+    { id: '4H', label: '4 Hours', timeframe: '4H', active: activeChart === '4H' },
+    { id: '1H', label: '1 Hour', timeframe: '1H', active: activeChart === '1H' },
+    { id: '15M', label: '15 Minutes', timeframe: '15M', active: activeChart === '15M' }
+  ];
+
+  const layoutConfigs = {
     '1x1': { cols: 1, rows: 1, gridClass: 'grid-cols-1 grid-rows-1' },
     '2x1': { cols: 2, rows: 1, gridClass: 'grid-cols-2 grid-rows-1' },
     '1x2': { cols: 1, rows: 2, gridClass: 'grid-cols-1 grid-rows-2' },
@@ -51,11 +66,6 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
       return newSet;
     });
   };
-
-  const handleStrategySelect = useCallback((strategy: RecentRun) => {
-    setActiveStrategy(strategy);
-    console.log('Active strategy changed to:', strategy.name);
-  }, []);
 
   // Resize handlers
   const handleMouseDown = useCallback((panel: string, e: React.MouseEvent) => {
@@ -90,11 +100,38 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
     document.body.style.userSelect = '';
   }, [handleMouseMove]);
 
+  // Mock chart data generation for the strategy
+  const generateMockChartData = () => {
+    const priceData = Array.from({ length: 100 }, (_, i) => ({
+      date: new Date(Date.now() - (100 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      open: 100 + Math.random() * 50,
+      high: 110 + Math.random() * 60,
+      low: 90 + Math.random() * 40,
+      close: 105 + Math.random() * 45,
+      volume: Math.floor(1000000 + Math.random() * 5000000)
+    }));
 
-  const getDisplayedStrategies = () => {
-    const config = gridLayoutConfigs[gridLayout];
-    const maxStrategies = config.cols * config.rows;
-    return strategies.slice(0, maxStrategies);
+    return {
+      priceData,
+      movingAverage30W: priceData.map(p => ({ date: p.date, value: p.close * 0.95 })),
+      stageAnalysis: {
+        stages: priceData.map((p, i) => ({
+          date: p.date,
+          stage: (Math.floor(i / 25) + 1) as 1 | 2 | 3 | 4,
+          sataScore: 5 + Math.random() * 5
+        })),
+        relativeStrength: priceData.map(p => ({ date: p.date, value: Math.random() * 100 })),
+        momentum: priceData.map(p => ({ date: p.date, value: Math.random() * 2 - 1 })),
+        stageTransitions: []
+      },
+      trades: []
+    };
+  };
+
+  const getDisplayedTimeframes = () => {
+    const config = layoutConfigs[layout];
+    const maxTimeframes = config.cols * config.rows;
+    return timeframes.slice(0, maxTimeframes);
   };
 
   const renderLayoutSelector = () => (
@@ -105,23 +142,23 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
       }}
     >
       <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-        Chart Grid Layout
+        Chart Layout
       </h3>
       <div className="grid grid-cols-2 gap-3">
-        {Object.entries(gridLayoutConfigs).map(([layoutKey, config]) => (
+        {Object.entries(layoutConfigs).map(([layoutKey, config]) => (
           <button
             key={layoutKey}
             onClick={() => {
-              setGridLayout(layoutKey as ChartGridLayout);
+              setLayout(layoutKey as SplitLayout);
               setShowLayoutSelector(false);
             }}
             className={`p-3 border rounded-lg transition-all hover:bg-opacity-50 ${
-              gridLayout === layoutKey ? 'ring-2' : ''
+              layout === layoutKey ? 'ring-2' : ''
             }`}
             style={{
-              borderColor: gridLayout === layoutKey ? 'var(--accent)' : 'var(--border)',
+              borderColor: layout === layoutKey ? 'var(--accent)' : 'var(--border)',
               ringColor: 'var(--accent)',
-              backgroundColor: gridLayout === layoutKey ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+              backgroundColor: layout === layoutKey ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
             }}
           >
             <div className="flex items-center justify-center mb-2">
@@ -139,27 +176,142 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
     </div>
   );
 
-  const renderStrategyChart = (strategy: RecentRun, index: number) => (
+  const renderMultiTimeframeChart = (timeframe: TimeframeView, index: number) => (
     <div
-      key={strategy.id}
+      key={timeframe.id}
       className={`border rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
-        activeStrategy.id === strategy.id ? 'ring-2 ring-opacity-75' : 'hover:shadow-md'
+        timeframe.active ? 'ring-2 ring-opacity-75' : 'hover:shadow-md'
       }`}
       style={{
         backgroundColor: 'var(--surface)',
-        borderColor: activeStrategy.id === strategy.id ? 'var(--accent)' : 'var(--border)',
-        ringColor: activeStrategy.id === strategy.id ? 'var(--accent)' : 'transparent'
+        borderColor: timeframe.active ? 'var(--accent)' : 'var(--border)',
+        ringColor: timeframe.active ? 'var(--accent)' : 'transparent'
       }}
-      onClick={() => handleStrategySelect(strategy)}
+      onClick={() => setActiveChart(timeframe.id)}
     >
-      {/* Use StrategyViewScreen in chartOnly mode */}
-      <StrategyViewScreen
-        strategy={strategy}
-        onBack={() => {}} // Not used in chartOnly mode
-        chartOnly={true}
-        onChartClick={() => handleStrategySelect(strategy)}
-        isActive={activeStrategy.id === strategy.id}
-      />
+      {/* Chart Header */}
+      <div 
+        className={`px-4 py-2 border-b transition-colors ${
+          timeframe.active ? 'bg-opacity-10' : ''
+        }`}
+        style={{ 
+          borderColor: 'var(--border)',
+          backgroundColor: timeframe.active ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <BarChart3 
+                size={16} 
+                style={{ color: timeframe.active ? 'var(--accent)' : 'var(--text-secondary)' }} 
+              />
+              <h3 
+                className="font-semibold text-sm"
+                style={{ color: timeframe.active ? 'var(--accent)' : 'var(--text-primary)' }}
+              >
+                {strategy.name} {strategy.version}
+              </h3>
+            </div>
+            <div 
+              className="text-xs px-2 py-1 rounded"
+              style={{ 
+                backgroundColor: 'var(--bg-primary)',
+                color: 'var(--text-secondary)'
+              }}
+            >
+              {timeframe.timeframe}
+            </div>
+          </div>
+          
+          {/* Key Metrics */}
+          <div className="flex items-center space-x-4 text-xs">
+            <div className="flex items-center space-x-1">
+              <TrendingUp size={12} style={{ color: 'var(--text-secondary)' }} />
+              <span 
+                className="font-medium"
+                style={{ color: strategy.totalReturn >= 0 ? '#10b981' : '#ef4444' }}
+              >
+                {strategy.totalReturn >= 0 ? '+' : ''}{strategy.totalReturn.toFixed(1)}%
+              </span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Target size={12} style={{ color: 'var(--text-secondary)' }} />
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {strategy.winRate.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Chart Area */}
+      <div className="p-4">
+        <div className="relative">
+          {/* Chart Container */}
+          <div 
+            className="h-64 rounded border flex items-center justify-center relative overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-primary)',
+              borderColor: 'var(--border)'
+            }}
+          >
+            {/* Chart Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <svg width="100%" height="100%">
+                <defs>
+                  <pattern id={`grid-${timeframe.id}`} width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path 
+                      d="M 20 0 L 0 0 0 20" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="0.5"
+                      style={{ color: 'var(--text-secondary)' }}
+                    />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill={`url(#grid-${timeframe.id})`} />
+              </svg>
+            </div>
+
+            {/* Chart Content */}
+            <div className="relative z-10 w-full h-full">
+              <StageAnalysisChart
+                strategy={{...strategy, timeframe: timeframe.timeframe}}
+                timeInterval={timeframe.timeframe}
+                className="w-full h-full"
+              />
+            </div>
+
+            {/* Active Indicator */}
+            {timeframe.active && (
+              <div className="absolute top-2 right-2">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                  title="Active timeframe"
+                />
+              </div>
+            )}
+
+            {/* Click to Focus Indicator */}
+            {!timeframe.active && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-5 transition-all">
+                <div 
+                  className="text-xs px-3 py-1 rounded-full border opacity-0 hover:opacity-100 transition-opacity"
+                  style={{
+                    backgroundColor: 'var(--surface)',
+                    borderColor: 'var(--accent)',
+                    color: 'var(--accent)'
+                  }}
+                >
+                  Click to focus
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -176,17 +328,17 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
   ];
 
   const performanceMetrics = [
-    { label: 'Total Return', value: `${activeStrategy.totalReturn >= 0 ? '+' : ''}${activeStrategy.totalReturn.toFixed(2)}%`, color: activeStrategy.totalReturn >= 0 ? 'var(--highlight)' : '#ef4444' },
-    { label: 'Win Rate', value: `${activeStrategy.winRate.toFixed(1)}%`, color: 'var(--text-primary)' },
-    { label: 'Sharpe Ratio', value: activeStrategy.sharpe.toFixed(2), color: 'var(--text-primary)' },
-    { label: 'Max Drawdown', value: `${activeStrategy.maxDrawdown.toFixed(1)}%`, color: '#ef4444' },
-    { label: 'Total Trades', value: activeStrategy.totalTrades.toString(), color: 'var(--text-primary)' },
-    { label: 'Avg Hold Time', value: activeStrategy.avgHoldTime, color: 'var(--text-primary)' },
-    { label: 'Profit Factor', value: activeStrategy.profitFactor.toFixed(2), color: 'var(--text-primary)' },
-    { label: 'Calmar Ratio', value: activeStrategy.calmarRatio.toFixed(2), color: 'var(--text-primary)' }
+    { label: 'Total Return', value: `${strategy.totalReturn >= 0 ? '+' : ''}${strategy.totalReturn.toFixed(2)}%`, color: strategy.totalReturn >= 0 ? 'var(--highlight)' : '#ef4444' },
+    { label: 'Win Rate', value: `${strategy.winRate.toFixed(1)}%`, color: 'var(--text-primary)' },
+    { label: 'Sharpe Ratio', value: strategy.sharpe.toFixed(2), color: 'var(--text-primary)' },
+    { label: 'Max Drawdown', value: `${strategy.maxDrawdown.toFixed(1)}%`, color: '#ef4444' },
+    { label: 'Total Trades', value: strategy.totalTrades.toString(), color: 'var(--text-primary)' },
+    { label: 'Avg Hold Time', value: strategy.avgHoldTime, color: 'var(--text-primary)' },
+    { label: 'Profit Factor', value: strategy.profitFactor.toFixed(2), color: 'var(--text-primary)' },
+    { label: 'Calmar Ratio', value: strategy.calmarRatio.toFixed(2), color: 'var(--text-primary)' }
   ];
 
-  const displayedStrategies = getDisplayedStrategies();
+  const displayedTimeframes = getDisplayedTimeframes();
 
   return (
     <div className="h-screen flex flex-col" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -212,10 +364,10 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
           </button>
           <div>
             <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Split View - Visual Strategy Comparison
+              {strategy.name} {strategy.version} - Split View
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {displayedStrategies.length} strategies • Active: {activeStrategy.name} ({activeStrategy.symbol})
+              {strategy.symbol} • Multiple Timeframes • Active: {activeChart}
             </p>
           </div>
         </div>
@@ -233,7 +385,7 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
               }}
             >
               <Grid size={16} />
-              <span className="text-sm">{gridLayout}</span>
+              <span className="text-sm">{layout}</span>
             </button>
             {showLayoutSelector && renderLayoutSelector()}
           </div>
@@ -353,20 +505,20 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
 
           <span
             className={`px-3 py-1 rounded-full text-sm font-medium ${
-              activeStrategy.totalReturn >= 0 ? 'text-green-700' : 'text-red-700'
+              strategy.totalReturn >= 0 ? 'text-green-700' : 'text-red-700'
             }`}
             style={{
-              backgroundColor: activeStrategy.totalReturn >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
+              backgroundColor: strategy.totalReturn >= 0 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)'
             }}
           >
-            {activeStrategy.totalReturn >= 0 ? '+' : ''}{activeStrategy.totalReturn.toFixed(2)}%
+            {strategy.totalReturn >= 0 ? '+' : ''}{strategy.totalReturn.toFixed(2)}%
           </span>
         </div>
       </div>
 
-      {/* Main Content Area - Same Layout as StrategyViewScreen */}
+      {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Same as StrategyViewScreen but contextual to active strategy */}
+        {/* Left Sidebar - Same as StrategyViewScreen */}
         {leftPanelVisible && (
           <div className="relative flex">
             <div
@@ -403,67 +555,68 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
             </div>
           </div>
 
-          {/* Sidebar Content - Shows info for active strategy */}
+          {/* Sidebar Content - Same as StrategyViewScreen but contextual to active timeframe */}
           <div className="flex-1 overflow-y-auto p-4">
             {activeTab === 'overview' && (
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Active Strategy Information
+                    Strategy Information
                   </h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Name:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeStrategy.name}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{strategy.name}</span>
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Version:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeStrategy.version}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{strategy.version}</span>
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Symbol:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeStrategy.symbol}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{strategy.symbol}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span style={{ color: 'var(--text-secondary)' }}>Timeframe:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeStrategy.timeframe}</span>
+                      <span style={{ color: 'var(--text-secondary)' }}>Active Timeframe:</span>
+                      <span style={{ color: 'var(--accent)' }}>{activeChart}</span>
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
-                      <span style={{ color: 'var(--text-primary)' }}>{activeStrategy.startDate} to {activeStrategy.endDate}</span>
+                      <span style={{ color: 'var(--text-primary)' }}>{strategy.startDate} to {strategy.endDate}</span>
                     </div>
                   </div>
                 </div>
 
-                {activeStrategy.keynote && (
+                {strategy.keynote && (
                   <div>
                     <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
                       Strategy Notes
                     </h3>
                     <p className="text-sm italic" style={{ color: 'var(--text-secondary)' }}>
-                      "{activeStrategy.keynote}"
+                      "{strategy.keynote}"
                     </p>
                   </div>
                 )}
 
-                {/* Split View Info */}
+                {/* Active Timeframe Info */}
                 <div>
                   <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Split View Overview
+                    Active Timeframe: {activeChart}
                   </h3>
                   <div className="text-sm p-3 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                     <div style={{ color: 'var(--text-secondary)' }}>
-                      Comparing {strategies.length} strategies in {gridLayout} layout. Click any chart to view its details in the side panels.
+                      Viewing {timeframes.find(t => t.id === activeChart)?.label} chart analysis for detailed signals and patterns.
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
+            {/* Additional tabs would be similar to StrategyViewScreen but contextual to the active timeframe */}
             {activeTab === 'performance' && (
               <div className="space-y-4">
                 <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                  Key Metrics - {activeStrategy.name}
+                  Key Metrics ({activeChart})
                 </h3>
                 <div className="grid grid-cols-1 gap-3">
                   {performanceMetrics.map((metric, index) => (
@@ -488,8 +641,6 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 </div>
               </div>
             )}
-
-            {/* Additional tabs would show info for activeStrategy */}
           </div>
         </div>
             
@@ -507,17 +658,17 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
           </div>
         )}
 
-        {/* Center Chart Grid Area - THIS IS THE KEY DIFFERENCE */}
+        {/* Center Chart Grid Area */}
         <div className="flex-1 flex flex-col">
           <div className="flex flex-1">
-            {/* Strategy Chart Grid */}
+            {/* Multi-Timeframe Chart Grid */}
             <div className="flex-1 p-6">
-              <div className={`grid gap-4 h-full ${gridLayoutConfigs[gridLayout].gridClass}`}>
-                {displayedStrategies.map((strategy, index) => renderStrategyChart(strategy, index))}
+              <div className={`grid gap-4 h-full ${layoutConfigs[layout].gridClass}`}>
+                {displayedTimeframes.map((timeframe, index) => renderMultiTimeframeChart(timeframe, index))}
               </div>
             </div>
 
-            {/* Right Analytics Panel - Same as StrategyViewScreen but contextual to active strategy */}
+            {/* Right Analytics Panel - Same as StrategyViewScreen */}
             {rightPanelVisible && (
               <div className="relative flex">
                 {/* Right Panel Resize Handle */}
@@ -540,12 +691,12 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                     borderColor: 'var(--border)'
                   }}
                 >
-              {/* SATA Score Display for Active Strategy */}
+              {/* SATA Score Display */}
               <div className="mb-6">
                 <div className="text-center p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="text-2xl font-bold mb-1" style={{ color: 'var(--highlight)' }}>8.2</div>
-                  <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>SATA Score</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{activeStrategy.name}</div>
+                  <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>SATA Score ({activeChart})</div>
+                  <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>High Probability Setup</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
                   <div className="text-center p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -559,9 +710,9 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 </div>
               </div>
 
-              {/* Current Stage Indicator */}
+              {/* Current Stage Indicator for Active Timeframe */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Current Stage - {activeStrategy.symbol}</h3>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Current Stage ({activeChart})</h3>
                 <div className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
                   <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }}></div>
                   <div>
@@ -571,9 +722,9 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 </div>
               </div>
 
-              {/* Signal Summary for Active Strategy */}
+              {/* Signal Summary for Active Timeframe */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Active Signals</h3>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Active Signals ({activeChart})</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
                     <div className="flex items-center space-x-2">
@@ -599,9 +750,9 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 </div>
               </div>
 
-              {/* Next Action Recommendations */}
+              {/* Timeframe-specific Recommendations */}
               <div>
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recommendations</h3>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recommendations ({activeChart})</h3>
                 <div className="space-y-3 text-sm">
                   <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                     <div className="flex items-center space-x-2 mb-1">
@@ -624,7 +775,7 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
             )}
           </div>
 
-          {/* Bottom Accordion Panels - Same as StrategyViewScreen but contextual to active strategy */}
+          {/* Bottom Accordion Panels - Same as StrategyViewScreen */}
           {bottomPanelVisible && (
             <div className="relative">
               {/* Bottom Panel Resize Handle */}
@@ -655,7 +806,7 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 <div className="flex items-center space-x-3">
                   <Activity size={18} style={{ color: 'var(--highlight)' }} />
                   <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Performance Analysis - {activeStrategy.name}
+                    Performance Analysis ({activeChart})
                   </span>
                 </div>
                 {expandedAccordions.has('performance') ? (
@@ -688,7 +839,7 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                 <div className="flex items-center space-x-3">
                   <DollarSign size={18} style={{ color: 'var(--highlight)' }} />
                   <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Trade Analysis - {activeStrategy.name}
+                    Trade Analysis ({activeChart})
                   </span>
                 </div>
                 {expandedAccordions.has('trades') ? (
@@ -703,19 +854,19 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                       <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total Trades</div>
-                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{activeStrategy.totalTrades}</div>
+                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{strategy.totalTrades}</div>
                     </div>
                     <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                       <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Win Rate</div>
-                      <div className="text-lg font-bold text-green-500">{activeStrategy.winRate.toFixed(1)}%</div>
+                      <div className="text-lg font-bold text-green-500">{strategy.winRate.toFixed(1)}%</div>
                     </div>
                     <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                       <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Profit Factor</div>
-                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{activeStrategy.profitFactor.toFixed(2)}</div>
+                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{strategy.profitFactor.toFixed(2)}</div>
                     </div>
                     <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                       <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Avg Hold Time</div>
-                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{activeStrategy.avgHoldTime}</div>
+                      <div className="text-lg font-bold" style={{ color: 'var(--highlight)' }}>{strategy.avgHoldTime}</div>
                     </div>
                   </div>
                 </div>
@@ -730,4 +881,4 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
   );
 };
 
-export default MultiStrategyViewScreen;
+export default SplitViewScreen;

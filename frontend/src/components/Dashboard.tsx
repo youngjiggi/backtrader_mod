@@ -9,6 +9,10 @@ import DynamicPerformanceCards from './DynamicPerformanceCards';
 import BenchmarkComparison from './BenchmarkComparison';
 import StrategyComparisonChart from './StrategyComparisonChart';
 import PerformanceDetailsAccordion from './PerformanceDetailsAccordion';
+import TestimonialsSection from './TestimonialsSection';
+import BusinessModelSection from './BusinessModelSection';
+import AdditionalResourcesSection from './AdditionalServicesSection';
+import SiteNavigationSection from './SiteNavigationSection';
 import { BarChart3, Library, Plus, X, Clock, Play, Search, List } from 'lucide-react';
 import { generateMockStageData } from '../utils/mockStageData';
 
@@ -605,18 +609,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
           onDoubleClickStrategy={handleNavigateToStrategyView}
         />
 
-        {/* Performance Overview - Current Portfolio Tracking */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Performance Overview
-            </h2>
-            <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Current Portfolio Strategy Tracking
-            </div>
-          </div>
-          <DynamicPerformanceCards selectedRun={selectedRecentRun} timeInterval={timeInterval} />
-        </div>
 
         {/* Strategy Comparison Chart */}
         {(baseStrategyId || comparisonStrategies.length > 0) && (
@@ -774,21 +766,92 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
             </div>
           </CollapsibleSection>
 
-          {/* Performance Comparison */}
+          {/* Strategy Backtesting Example - Macro */}
           <CollapsibleSection
-            title="Performance Overview"
+            title="Strategy Backtesting Example - Macro"
             icon={<BarChart3 size={20} />}
           >
-            <div 
-              className="h-64 rounded-lg border flex items-center justify-center"
-              style={{
+            <div className="space-y-4">
+              {/* Sample Strategy Header */}
+              <div className="flex items-center justify-between p-4 rounded-lg border" style={{
                 backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)'
-              }}
-            >
-              <p style={{ color: 'var(--text-secondary)' }}>
-                Performance charts will be displayed here
-              </p>
+              }}>
+                <div>
+                  <h4 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    SPX Momentum Strategy
+                  </h4>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    SPDR S&P 500 ETF Trust • Daily Timeframe • 2020-2024
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-bold text-green-500">+89.2%</div>
+                  <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total Return</div>
+                </div>
+              </div>
+
+              {/* Sample Metrics */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="text-center p-3 rounded border" style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}>
+                  <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>74.3%</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Win Rate</div>
+                </div>
+                <div className="text-center p-3 rounded border" style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}>
+                  <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>1.67</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sharpe Ratio</div>
+                </div>
+                <div className="text-center p-3 rounded border" style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}>
+                  <div className="text-lg font-bold text-red-500">-12.8%</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Max Drawdown</div>
+                </div>
+                <div className="text-center p-3 rounded border" style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}>
+                  <div className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>342</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Total Trades</div>
+                </div>
+              </div>
+
+              {/* Sample Chart Placeholder */}
+              <div 
+                className="h-48 rounded-lg border flex items-center justify-center"
+                style={{
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}
+              >
+                <div className="text-center">
+                  <BarChart3 size={48} style={{ color: 'var(--text-secondary)', margin: '0 auto 8px' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    SPX Strategy Performance Chart
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    This is a sample of what your backtesting results would look like
+                  </p>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setIsNewBacktestModalOpen(true)}
+                  className="px-6 py-2 rounded-lg font-medium text-white transition-colors duration-200 hover:opacity-90"
+                  style={{ backgroundColor: 'var(--highlight)' }}
+                >
+                  Try Your Own Strategy
+                </button>
+              </div>
             </div>
           </CollapsibleSection>
 
@@ -829,6 +892,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
               ))}
             </div>
           </CollapsibleSection>
+
+          {/* Business Sections */}
+          <TestimonialsSection />
+          <BusinessModelSection />
+          <AdditionalResourcesSection />
+          <SiteNavigationSection />
         </div>
       </main>
 

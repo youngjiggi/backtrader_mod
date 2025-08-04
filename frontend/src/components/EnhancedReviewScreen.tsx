@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { Play, Clock, DollarSign, Target, TrendingUp, BarChart3, AlertTriangle, Settings, Zap, Info, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Play, Clock, DollarSign, Target, TrendingUp, BarChart3, AlertTriangle, Settings, Zap, Info, CheckCircle, AlertCircle, Edit2, Save, Upload, Download } from 'lucide-react';
 import { BacktestScenario } from './TemplateSelector';
 import { PortfolioPosition } from './ExistingPortfolioImporter';
 import { IndicatorConfig } from './SimplifiedIndicatorSelector';
@@ -36,6 +36,57 @@ const EnhancedReviewScreen: React.FC<EnhancedReviewScreenProps> = ({
   executionProgress = 0,
   className = ''
 }) => {
+  const [isEditingPortfolio, setIsEditingPortfolio] = useState(false);
+  const [editableExecutionSettings, setEditableExecutionSettings] = useState(data.executionSettings);
+
+  // Save portfolio allocation settings
+  const savePortfolioSettings = () => {
+    const settings = {
+      executionSettings: editableExecutionSettings,
+      timestamp: new Date().toISOString(),
+      scenarioId: data.scenario.id
+    };
+    
+    const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `portfolio-settings-${data.scenario.id}-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  // Load portfolio allocation settings
+  const loadPortfolioSettings = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const settings = JSON.parse(e.target?.result as string);
+          if (settings.executionSettings) {
+            setEditableExecutionSettings(settings.executionSettings);
+            onDataUpdate({ executionSettings: settings.executionSettings });
+          }
+        } catch (error) {
+          alert('Error loading portfolio settings file');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  // Save changes to execution settings
+  const handleSavePortfolioChanges = () => {
+    onDataUpdate({ executionSettings: editableExecutionSettings });
+    setIsEditingPortfolio(false);
+  };
+
+  // Cancel editing
+  const handleCancelPortfolioEdit = () => {
+    setEditableExecutionSettings(data.executionSettings);
+    setIsEditingPortfolio(false);
+  };
   // Calculate estimated execution time and resource usage
   const executionEstimate = useMemo(() => {
     const baseTime = 30; // 30 seconds base
@@ -193,33 +244,145 @@ const EnhancedReviewScreen: React.FC<EnhancedReviewScreenProps> = ({
         className="p-4 rounded-lg border"
         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}
       >
-        <div className="flex items-center space-x-2 mb-3">
-          <DollarSign size={16} style={{ color: 'var(--highlight)' }} />
-          <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
-            Portfolio Allocation
-          </h4>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center space-x-2">
+            <DollarSign size={16} style={{ color: 'var(--highlight)' }} />
+            <h4 className="font-medium" style={{ color: 'var(--text-primary)' }}>
+              Portfolio Allocation
+            </h4>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            {/* Save/Load Buttons */}
+            <input
+              type="file"
+              accept=".json"
+              onChange={loadPortfolioSettings}
+              className="hidden"
+              id="load-portfolio-settings"
+            />
+            <label
+              htmlFor="load-portfolio-settings"
+              className="flex items-center space-x-1 px-3 py-1.5 text-xs rounded-lg cursor-pointer transition-colors hover:bg-opacity-80"
+              style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)', border: `1px solid var(--border)` }}
+            >
+              <Upload size={12} />
+              <span>Load</span>
+            </label>
+            
+            <button
+              onClick={savePortfolioSettings}
+              className="flex items-center space-x-1 px-3 py-1.5 text-xs rounded-lg transition-colors hover:bg-opacity-80"
+              style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)', border: `1px solid var(--border)` }}
+            >
+              <Download size={12} />
+              <span>Save</span>
+            </button>
+            
+            {!isEditingPortfolio ? (
+              <button
+                onClick={() => setIsEditingPortfolio(true)}
+                className="flex items-center space-x-1 px-3 py-1.5 text-xs rounded-lg transition-colors"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-primary)' }}
+              >
+                <Edit2 size={12} />
+                <span>Edit</span>
+              </button>
+            ) : (
+              <div className="flex space-x-1">
+                <button
+                  onClick={handleSavePortfolioChanges}
+                  className="flex items-center space-x-1 px-3 py-1.5 text-xs rounded-lg transition-colors"
+                  style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-primary)' }}
+                >
+                  <Save size={12} />
+                  <span>Save</span>
+                </button>
+                <button
+                  onClick={handleCancelPortfolioEdit}
+                  className="px-3 py-1.5 text-xs rounded-lg transition-colors"
+                  style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)', border: `1px solid var(--border)` }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span style={{ color: 'var(--text-secondary)' }}>Initial Capital:</span>
-              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {formatCurrency(data.executionSettings.initialCapital)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center mb-1">
-              <span style={{ color: 'var(--text-secondary)' }}>Commission per Trade:</span>
-              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                ${data.executionSettings.commission.toFixed(2)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span style={{ color: 'var(--text-secondary)' }}>Slippage:</span>
-              <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {data.executionSettings.slippage}%
-              </span>
-            </div>
+            {isEditingPortfolio ? (
+              <>
+                <div className="flex justify-between items-center mb-3">
+                  <span style={{ color: 'var(--text-secondary)' }}>Initial Capital:</span>
+                  <input
+                    type="number"
+                    value={editableExecutionSettings.initialCapital}
+                    onChange={(e) => setEditableExecutionSettings({
+                      ...editableExecutionSettings,
+                      initialCapital: Number(e.target.value)
+                    })}
+                    className="w-24 px-2 py-1 text-xs border rounded text-right"
+                    style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    min="1000"
+                    step="1000"
+                  />
+                </div>
+                <div className="flex justify-between items-center mb-3">
+                  <span style={{ color: 'var(--text-secondary)' }}>Commission per Trade:</span>
+                  <input
+                    type="number"
+                    value={editableExecutionSettings.commission}
+                    onChange={(e) => setEditableExecutionSettings({
+                      ...editableExecutionSettings,
+                      commission: Number(e.target.value)
+                    })}
+                    className="w-20 px-2 py-1 text-xs border rounded text-right"
+                    style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--text-secondary)' }}>Slippage (%):</span>
+                  <input
+                    type="number"
+                    value={editableExecutionSettings.slippage}
+                    onChange={(e) => setEditableExecutionSettings({
+                      ...editableExecutionSettings,
+                      slippage: Number(e.target.value)
+                    })}
+                    className="w-16 px-2 py-1 text-xs border rounded text-right"
+                    style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    min="0"
+                    max="5"
+                    step="0.01"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-1">
+                  <span style={{ color: 'var(--text-secondary)' }}>Initial Capital:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {formatCurrency(data.executionSettings.initialCapital)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center mb-1">
+                  <span style={{ color: 'var(--text-secondary)' }}>Commission per Trade:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    ${data.executionSettings.commission.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--text-secondary)' }}>Slippage:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {data.executionSettings.slippage}%
+                  </span>
+                </div>
+              </>
+            )}
           </div>
 
           <div>
