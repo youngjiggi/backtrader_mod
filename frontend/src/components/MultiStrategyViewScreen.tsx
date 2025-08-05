@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { ArrowLeft, Settings, TrendingUp, BarChart3, Activity, Target, DollarSign, Calendar, ChevronDown, ChevronUp, Play, Cog, Users, TrendingDown, AlertTriangle, Zap, LineChart, PieChart, Brain, CheckCircle, XCircle, Clock, GripVertical, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Grid, Square, Columns, Rows } from 'lucide-react';
 import { RecentRun } from './RecentRunsCarousel';
 import StrategyViewScreen from './StrategyViewScreen';
+import TradeJournal from './TradeJournal';
 
 export type ChartGridLayout = '1x1' | '2x1' | '1x2' | '2x2';
 
@@ -486,7 +487,170 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
               </div>
             )}
 
-            {/* Additional tabs would show info for activeStrategy */}
+            {activeTab === 'stage' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Stage & SATA Analysis - {activeStrategy.name}
+                </h3>
+                
+                {/* Current Stage */}
+                <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Current Stage</h4>
+                  <div className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }}></div>
+                    <div>
+                      <div className="font-medium text-green-700">Stage 2: Advancing</div>
+                      <div className="text-xs text-green-600">Strong uptrend confirmed</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* SATA Score */}
+                <div className="p-4 rounded-lg border text-center" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="text-3xl font-bold mb-2" style={{ color: 'var(--highlight)' }}>8.2</div>
+                  <div className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>SATA Score</div>
+                  <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>High Probability Setup</div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'indicators' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Active Indicators - {activeStrategy.name}
+                </h3>
+                
+                <div className="space-y-2">
+                  {['RSI (14)', 'VWAP', 'ATR (14)', 'Volume Profile'].map((indicator, index) => (
+                    <div key={indicator} className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{indicator}</span>
+                      <span className={`px-2 py-1 text-xs rounded ${index < 2 ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>
+                        {index < 2 ? 'Active' : 'Monitoring'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'signalhierarchy' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Signal Hierarchy - {activeStrategy.name}
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Primary Signal:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Weinstein Stage</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Secondary Signal:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>RSI</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Filter Signal:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>VWAP</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'rules' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Trading Rules - {activeStrategy.name}
+                </h3>
+                
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Entry Conditions</h4>
+                    <div className="space-y-2 text-sm">
+                      {['Stage 2 confirmation', 'RSI < 70', 'Above VWAP', 'Volume > 1.5x avg'].map((rule, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <CheckCircle size={14} className="text-green-500" />
+                          <span style={{ color: 'var(--text-primary)' }}>{rule}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Exit Conditions</h4>
+                    <div className="space-y-2 text-sm">
+                      {['Stop loss: 2x ATR', 'Take profit: 4x ATR', 'RSI > 80', 'Stage change'].map((rule, index) => (
+                        <div key={index} className="flex items-center space-x-2">
+                          <XCircle size={14} className="text-red-500" />
+                          <span style={{ color: 'var(--text-primary)' }}>{rule}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Strategy Settings - {activeStrategy.name}
+                </h3>
+                
+                <div className="space-y-3">
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Position Size:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>100 shares</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Stop Loss:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>2.0% ATR</span>
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Take Profit:</span>
+                      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>4.0% ATR</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="space-y-4">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  Strategy History - {activeStrategy.name}
+                </h3>
+                
+                <div className="space-y-2 text-sm">
+                  {[
+                    { date: '2024-01-15', action: 'Strategy created', version: 'v1.0' },
+                    { date: '2024-01-20', action: 'Updated stop loss', version: 'v1.1' },
+                    { date: '2024-02-01', action: 'Added VWAP filter', version: 'v2.0' },
+                    { date: '2024-02-15', action: 'Optimized entry rules', version: 'v2.1' }
+                  ].map((event, index) => (
+                    <div key={index} className="flex items-center space-x-3 p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                      <Clock size={14} style={{ color: 'var(--text-secondary)' }} />
+                      <div className="flex-1">
+                        <div style={{ color: 'var(--text-primary)' }}>{event.action}</div>
+                        <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>{event.date} - {event.version}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Additional tabs content complete */}
           </div>
         </div>
             
@@ -507,10 +671,23 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
         {/* Center Chart Grid Area - THIS IS THE KEY DIFFERENCE */}
         <div className="flex-1 flex flex-col">
           <div className="flex flex-1">
-            {/* Strategy Chart Grid */}
-            <div className="flex-1 p-6">
-              <div className={`grid gap-4 h-full ${gridLayoutConfigs[gridLayout].gridClass}`}>
-                {displayedStrategies.map((strategy, index) => renderStrategyChart(strategy, index))}
+            {/* Strategy Chart Grid with TradeJournal below */}
+            <div className="flex-1 flex flex-col p-6">
+              {/* Chart Grid - Upper Section */}
+              <div className="flex-1 mb-4">
+                <div className={`grid gap-4 h-full ${gridLayoutConfigs[gridLayout].gridClass}`}>
+                  {displayedStrategies.map((strategy, index) => renderStrategyChart(strategy, index))}
+                </div>
+              </div>
+              
+              {/* TradeJournal - Lower Section */}
+              <div className="h-80 border-t pt-4" style={{ borderColor: 'var(--border)' }}>
+                <div className="h-full">
+                  <TradeJournal 
+                    strategy={activeStrategy} 
+                    className="h-full"
+                  />
+                </div>
               </div>
             </div>
 
@@ -537,61 +714,161 @@ const MultiStrategyViewScreen: React.FC<MultiStrategyViewScreenProps> = ({ strat
                     borderColor: 'var(--border)'
                   }}
                 >
-              {/* SATA Score Display for Active Strategy */}
+              {/* Enhanced SATA Score Display - Progressive Dot Fill */}
               <div className="mb-6">
                 <div className="text-center p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-                  <div className="text-2xl font-bold mb-1" style={{ color: 'var(--highlight)' }}>8.2</div>
-                  <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>SATA Score</div>
-                  <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>{activeStrategy.name}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mt-3 text-xs">
-                  <div className="text-center p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Stage: 2</div>
-                    <div style={{ color: 'var(--text-secondary)' }}>Advancing</div>
+                  {/* Dots grid filling top area - 4 rows of 10 dots each */}
+                  <div className="mb-4">
+                    <div className="grid grid-cols-10 grid-rows-4 gap-1 w-40 h-12 mx-auto">
+                      {[...Array(40)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-2 h-2 rounded-full transition-all duration-300`}
+                          style={{
+                            backgroundColor: i < (8.2 * 4) ? 'var(--highlight)' : 'var(--border)',
+                            opacity: i < (8.2 * 4) ? 1 : 0.2,
+                            animationDelay: `${i * 30}ms`
+                          }}
+                        ></div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-center p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>ATR: 2.3</div>
-                    <div style={{ color: 'var(--text-secondary)' }}>Moderate</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Current Stage Indicator */}
-              <div className="mb-6">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Current Stage - {activeStrategy.symbol}</h3>
-                <div className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }}></div>
+                  
+                  {/* Score and label at bottom */}
                   <div>
-                    <div className="font-medium text-green-700">Stage 2: Advancing</div>
-                    <div className="text-xs text-green-600">Strong uptrend confirmed</div>
+                    <div className="text-3xl font-bold mb-1" style={{ color: 'var(--highlight)' }}>8.2</div>
+                    <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>SATA Score</div>
+                  </div>
+                </div>
+                
+                {/* Quick Metrics Grid */}
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex items-center justify-center mb-1">
+                      <PieChart size={16} style={{ color: 'var(--highlight)' }} />
+                    </div>
+                    <div className="font-semibold text-green-600">Stage 2</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Advancing</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex items-center justify-center mb-1">
+                      <Activity size={16} style={{ color: 'var(--highlight)' }} />
+                    </div>
+                    <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>2.3%</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>ATR</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex items-center justify-center mb-1">
+                      <TrendingUp size={16} className="text-green-500" />
+                    </div>
+                    <div className="font-semibold text-green-600">{activeStrategy.winRate.toFixed(0)}%</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Win Rate</div>
+                  </div>
+                  <div className="text-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                    <div className="flex items-center justify-center mb-1">
+                      <Target size={16} style={{ color: activeStrategy.sharpe >= 1.5 ? '#10b981' : activeStrategy.sharpe >= 1.0 ? '#f59e0b' : '#ef4444' }} />
+                    </div>
+                    <div className="font-semibold" style={{ color: activeStrategy.sharpe >= 1.5 ? '#10b981' : activeStrategy.sharpe >= 1.0 ? '#f59e0b' : '#ef4444' }}>
+                      {activeStrategy.sharpe.toFixed(1)}
+                    </div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sharpe</div>
                   </div>
                 </div>
               </div>
 
-              {/* Signal Summary for Active Strategy */}
+              {/* Performance Trend Chart */}
               <div className="mb-6">
-                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Active Signals</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle size={14} className="text-green-500" />
-                      <span style={{ color: 'var(--text-primary)' }}>RSI Momentum</span>
-                    </div>
-                    <span className="text-green-500 font-medium">BUY</span>
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Performance Trend</h3>
+                <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  {/* Simple line chart visualization */}
+                  <div className="relative h-20 mb-3">
+                    <svg className="w-full h-full" viewBox="0 0 300 80">
+                      {/* Grid lines */}
+                      <defs>
+                        <pattern id="grid" width="30" height="20" patternUnits="userSpaceOnUse">
+                          <path d="M 30 0 L 0 0 0 20" fill="none" stroke="var(--border)" strokeWidth="0.5" opacity="0.3"/>
+                        </pattern>
+                      </defs>
+                      <rect width="300" height="80" fill="url(#grid)" />
+                      
+                      {/* Performance line (simulated upward trend) */}
+                      <polyline
+                        fill="none"
+                        stroke="var(--highlight)"
+                        strokeWidth="2"
+                        points="10,60 40,55 70,48 100,45 130,40 160,35 190,30 220,25 250,20 280,15"
+                        className="animate-pulse"
+                      />
+                      
+                      {/* Data points */}
+                      {[{x: 10, y: 60}, {x: 70, y: 48}, {x: 130, y: 40}, {x: 190, y: 30}, {x: 250, y: 20}, {x: 280, y: 15}].map((point, i) => (
+                        <circle key={i} cx={point.x} cy={point.y} r="2" fill="var(--highlight)" />
+                      ))}
+                    </svg>
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <div className="flex items-center space-x-2">
-                      <CheckCircle size={14} className="text-green-500" />
-                      <span style={{ color: 'var(--text-primary)' }}>VWAP Support</span>
-                    </div>
-                    <span className="text-green-500 font-medium">HOLD</span>
+                  
+                  <div className="flex justify-between text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <span>30D</span>
+                    <span className="font-medium text-green-600">+{activeStrategy.totalReturn.toFixed(1)}%</span>
+                    <span>Today</span>
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                    <div className="flex items-center space-x-2">
-                      <AlertTriangle size={14} className="text-yellow-500" />
-                      <span style={{ color: 'var(--text-primary)' }}>CVD Divergence</span>
+                </div>
+              </div>
+
+              {/* Combined Risk Metrics */}
+              <div className="mb-6">
+                <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Risk Analysis</h3>
+                <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="space-y-4">
+                    {/* Max Drawdown */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Max Drawdown</span>
+                        <span className="font-medium text-red-500">{activeStrategy.maxDrawdown.toFixed(1)}%</span>
+                      </div>
+                      <div className="w-full bg-red-100 rounded-full h-2">
+                        <div 
+                          className="bg-red-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${Math.min(100, activeStrategy.maxDrawdown * 2)}%` }}
+                        ></div>
+                      </div>
                     </div>
-                    <span className="text-yellow-500 font-medium">WATCH</span>
+                    
+                    {/* Sharpe Ratio */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sharpe Ratio</span>
+                        <span className={`font-medium ${activeStrategy.sharpe >= 1.5 ? 'text-green-600' : activeStrategy.sharpe >= 1.0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                          {activeStrategy.sharpe.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all duration-500 ${
+                            activeStrategy.sharpe >= 1.5 ? 'bg-green-500' : 
+                            activeStrategy.sharpe >= 1.0 ? 'bg-yellow-500' : 'bg-red-500'
+                          }`}
+                          style={{ width: `${Math.min(100, (activeStrategy.sharpe / 3) * 100)}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    {/* Win Rate */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Win Rate</span>
+                        <span className="font-medium text-green-600">{activeStrategy.winRate.toFixed(0)}%</span>
+                      </div>
+                      <div className="w-full bg-green-100 rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${activeStrategy.winRate}%` }}
+                        ></div>
+                      </div>
+                      <div className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        {Math.floor(activeStrategy.totalTrades * (activeStrategy.winRate / 100))} / {activeStrategy.totalTrades} trades
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

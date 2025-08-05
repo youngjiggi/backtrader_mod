@@ -40,54 +40,60 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
 
     const trades: CombinedTrade[] = [];
 
-    // Add entries
-    strategy.tradeJournal.entries.forEach(entry => {
-      trades.push({
-        id: entry.id,
-        type: 'entry',
-        date: entry.date,
-        tradeType: entry.type,
-        price: entry.price,
-        size: entry.size,
-        reason: entry.reason,
-        signal: entry.signal,
-        confidence: entry.confidence
+    // Add entries (multiply by 10 for testing)
+    for (let multiplier = 0; multiplier < 10; multiplier++) {
+      strategy.tradeJournal.entries.forEach((entry, index) => {
+        trades.push({
+          id: `${entry.id}-${multiplier}`,
+          type: 'entry',
+          date: new Date(new Date(entry.date).getTime() + multiplier * 24 * 60 * 60 * 1000).toISOString(),
+          tradeType: entry.type,
+          price: entry.price + (Math.random() - 0.5) * 10,
+          size: entry.size + Math.floor(Math.random() * 100),
+          reason: entry.reason,
+          signal: entry.signal,
+          confidence: entry.confidence
+        });
       });
-    });
+    }
 
-    // Add exits
-    strategy.tradeJournal.exits.forEach(exit => {
-      trades.push({
-        id: exit.id,
-        type: 'exit',
-        date: exit.date,
-        tradeType: 'long', // Will be determined by matching entry
-        price: exit.price,
-        size: exit.size,
-        reason: exit.reason,
-        signal: exit.signal,
-        pnl: exit.pnl,
-        pnlPercent: exit.pnlPercent,
-        holdTime: exit.holdTime,
-        entryId: exit.entryId
+    // Add exits (multiply by 10 for testing)
+    for (let multiplier = 0; multiplier < 10; multiplier++) {
+      strategy.tradeJournal.exits.forEach((exit, index) => {
+        trades.push({
+          id: `${exit.id}-${multiplier}`,
+          type: 'exit',
+          date: new Date(new Date(exit.date).getTime() + multiplier * 24 * 60 * 60 * 1000).toISOString(),
+          tradeType: 'long', // Will be determined by matching entry
+          price: exit.price + (Math.random() - 0.5) * 10,
+          size: exit.size + Math.floor(Math.random() * 100),
+          reason: exit.reason,
+          signal: exit.signal,
+          pnl: exit.pnl + (Math.random() - 0.5) * 1000,
+          pnlPercent: exit.pnlPercent + (Math.random() - 0.5) * 10,
+          holdTime: exit.holdTime,
+          entryId: `${exit.entryId}-${multiplier}`
+        });
       });
-    });
+    }
 
-    // Add open positions
-    strategy.tradeJournal.openPositions.forEach(position => {
-      trades.push({
-        id: position.id,
-        type: 'open',
-        date: position.entryDate,
-        tradeType: position.type,
-        price: position.entryPrice,
-        size: position.size,
-        reason: 'Open Position',
-        signal: 'Active',
-        unrealizedPnl: position.unrealizedPnl,
-        holdTime: position.holdTime
+    // Add open positions (multiply by 10 for testing)
+    for (let multiplier = 0; multiplier < 10; multiplier++) {
+      strategy.tradeJournal.openPositions.forEach((position, index) => {
+        trades.push({
+          id: `${position.id}-${multiplier}`,
+          type: 'open',
+          date: new Date(new Date(position.entryDate).getTime() + multiplier * 24 * 60 * 60 * 1000).toISOString(),
+          tradeType: position.type,
+          price: position.entryPrice + (Math.random() - 0.5) * 10,
+          size: position.size + Math.floor(Math.random() * 100),
+          reason: 'Open Position',
+          signal: 'Active',
+          unrealizedPnl: position.unrealizedPnl + (Math.random() - 0.5) * 1000,
+          holdTime: position.holdTime
+        });
       });
-    });
+    }
 
     return trades;
   }, [strategy.tradeJournal]);
@@ -292,7 +298,7 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
         </div>
       </div>
 
-      {/* Trades Table */}
+      {/* Trades Table with Vertical Scroll */}
       <div
         className="border rounded-lg overflow-hidden"
         style={{
@@ -300,6 +306,7 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
           borderColor: 'var(--border)'
         }}
       >
+        {/* Fixed Header */}
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
@@ -379,6 +386,12 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
                 </th>
               </tr>
             </thead>
+          </table>
+        </div>
+
+        {/* Scrollable Body */}
+        <div className="max-h-48 overflow-y-auto overflow-x-auto">
+          <table className="w-full">
             <tbody>
               {filteredTrades.map((trade, index) => (
                 <tr
