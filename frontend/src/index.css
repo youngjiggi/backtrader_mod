@@ -48,6 +48,103 @@ body {
 .font-small h3 { font-size: 1.125rem; }
 .font-small .text-2xl { font-size: 1.5rem; }
 .font-small .text-xl { font-size: 1.25rem; }
+
+/* Black slider styles - Override all default styles */
+input[type="range"], 
+.sidebar-panel input[type="range"],
+div input[type="range"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 6px !important;
+  background: #000 !important;
+  border-radius: 3px !important;
+  outline: none !important;
+  cursor: pointer !important;
+  border: none !important;
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+input[type="range"]::-webkit-slider-thumb,
+.sidebar-panel input[type="range"]::-webkit-slider-thumb,
+div input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 16px !important;
+  width: 16px !important;
+  border-radius: 50% !important;
+  background: #000 !important;
+  cursor: pointer !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: #333 !important;
+  transform: scale(1.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* Firefox */
+input[type="range"]::-moz-range-thumb,
+.sidebar-panel input[type="range"]::-moz-range-thumb,
+div input[type="range"]::-moz-range-thumb {
+  height: 16px !important;
+  width: 16px !important;
+  border-radius: 50% !important;
+  background: #000 !important;
+  cursor: pointer !important;
+  border: 2px solid #fff !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: #333 !important;
+  transform: scale(1.1) !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+/* Firefox track */
+input[type="range"]::-moz-range-track,
+.sidebar-panel input[type="range"]::-moz-range-track,
+div input[type="range"]::-moz-range-track {
+  height: 6px !important;
+  background: #000 !important;
+  border-radius: 3px !important;
+  border: none !important;
+}
+
+/* Force black sliders everywhere - override all other styles */
+* input[type="range"] {
+  background: #000 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+}
+
+* input[type="range"]::-webkit-slider-thumb {
+  background: #000 !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  height: 16px !important;
+  width: 16px !important;
+  border-radius: 50% !important;
+  border: 2px solid #fff !important;
+}
+
+* input[type="range"]::-moz-range-thumb {
+  background: #000 !important;
+  height: 16px !important;
+  width: 16px !important;
+  border-radius: 50% !important;
+  border: 2px solid #fff !important;
+}
+
+* input[type="range"]::-moz-range-track {
+  background: #000 !important;
+  height: 6px !important;
+  border: none !important;
+  border-radius: 3px !important;
+}
+
 .font-small .text-lg { font-size: 1.125rem; }
 .font-small .text-sm { font-size: 0.75rem; }
 

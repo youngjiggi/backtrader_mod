@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Users, PieChart, LineChart, Zap, Target, TrendingUp, Settings, Calendar, TrendingDown, Pin, Star, Copy, Download } from 'lucide-react';
+import { Users, PieChart, LineChart, Zap, Target, TrendingUp, Settings, Calendar, TrendingDown, Pin, Star, Copy, Download, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import ResizablePanel from './ResizablePanel';
 import TabNavigation, { TabItem } from './TabNavigation';
 import { usePanelManager } from './PanelManager';
@@ -13,10 +13,12 @@ interface SidebarPanelProps {
 const defaultTabs: TabItem[] = [
   { id: 'portfolio', label: 'Portfolio', icon: Users },
   { id: 'stage', label: 'Stage & SATA', icon: PieChart },
+  { id: 'quickstats', label: 'Quick Stats', icon: Star },
+  { id: 'signals', label: 'Signals', icon: TrendingUp },
   { id: 'indicators', label: 'Indicators', icon: LineChart },
   { id: 'signalhierarchy', label: 'Signal Hierarchy', icon: Zap },
   { id: 'rules', label: 'Rules', icon: Target },
-  { id: 'performance', label: 'Performance', icon: TrendingUp },
+  { id: 'performance', label: 'Performance', icon: TrendingDown },
   { id: 'settings', label: 'Settings', icon: Settings },
   { id: 'history', label: 'History', icon: Calendar }
 ];
@@ -90,6 +92,40 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
               </div>
             </div>
 
+            {/* Existing Portfolio (Pro Feature) */}
+            <div>
+              <h4 className="font-medium mb-3 flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
+                <Users size={16} />
+                <span>Existing Portfolio</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">PRO</span>
+              </h4>
+              <div className="space-y-2">
+                {[
+                  { symbol: 'AAPL', shares: 100, avgCost: 145.23, entryDate: '2024-01-15', currentPrice: 158.42 },
+                  { symbol: 'TSLA', shares: 50, avgCost: 187.65, entryDate: '2024-02-03', currentPrice: 195.18 },
+                  { symbol: 'NVDA', shares: 25, avgCost: 425.80, entryDate: '2024-01-28', currentPrice: 448.92 }
+                ].map((position, index) => {
+                  const pnl = ((position.currentPrice - position.avgCost) / position.avgCost) * 100;
+                  return (
+                    <div key={index} className="p-3 rounded border" 
+                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{position.symbol}</span>
+                        <span className={`text-sm font-medium ${pnl >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {pnl >= 0 ? '+' : ''}{pnl.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        <div>Shares: {position.shares}</div>
+                        <div>Avg: ${position.avgCost}</div>
+                        <div>Entry: {position.entryDate}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Portfolio Settings */}
             <div>
               <h4 className="font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Portfolio Settings</h4>
@@ -152,14 +188,183 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                 </div>
                 <div className="flex justify-between items-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div>
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Technical Setup</span>
-                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Indicator confluence</div>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>ATR Context</span>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Volatility consideration</div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-semibold text-green-600">1.8</span>
-                    <input type="range" min="0" max="3" step="0.1" defaultValue="1.8" className="w-16" />
+                    <span className="font-semibold text-orange-600">2.0</span>
+                    <input type="range" min="0" max="4" step="0.1" defaultValue="2.0" className="w-16" />
                   </div>
                 </div>
+                <div className="flex justify-between items-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Trend Strength</span>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Momentum and direction</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold text-green-600">2.5</span>
+                    <input type="range" min="0" max="4" step="0.1" defaultValue="2.5" className="w-16" />
+                  </div>
+                </div>
+                <div className="flex justify-between items-center p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div>
+                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>A/D Pressure</span>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Accumulation/Distribution</div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-semibold text-yellow-600">1.7</span>
+                    <input type="range" min="0" max="3" step="0.1" defaultValue="1.7" className="w-16" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'quickstats':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+              Quick Stats & SATA Score
+            </h3>
+            
+            {/* SATA Score Section */}
+            <div className="p-4 rounded-lg border text-center" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+              <div className="text-3xl font-bold mb-2" style={{ color: 'var(--highlight)' }}>8.2</div>
+              <div className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>SATA Score</div>
+              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>High Probability Setup</div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="text-center p-3 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>Stage: 2</div>
+                <div style={{ color: 'var(--text-secondary)' }}>Advancing</div>
+              </div>
+              <div className="text-center p-3 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="font-semibold" style={{ color: 'var(--text-primary)' }}>ATR: 2.3</div>
+                <div style={{ color: 'var(--text-secondary)' }}>Moderate</div>
+              </div>
+            </div>
+
+            {/* SATA Score Breakdown */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                SATA Score Breakdown
+              </h4>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Stage Analysis</span>
+                  <span className="font-semibold text-green-600">2.0</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>ATR Context</span>
+                  <span className="font-semibold text-orange-600">2.0</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Trend Strength</span>
+                  <span className="font-semibold text-green-600">2.5</span>
+                </div>
+              </div>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>A/D Pressure</span>
+                  <span className="font-semibold text-yellow-600">1.7</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Additional Quick Stats */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>
+                Market Context
+              </h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Volume</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Above Average</div>
+                </div>
+                <div className="p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Momentum</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Strong</div>
+                </div>
+                <div className="p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Volatility</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Moderate</div>
+                </div>
+                <div className="p-2 rounded border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>Support</div>
+                  <div style={{ color: 'var(--text-secondary)' }}>Strong</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case 'signals':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+              Active Signals & Recommendations
+            </h3>
+            
+            {/* Current Stage */}
+            <div className="mb-4">
+              <h4 className="font-medium mb-2 text-sm" style={{ color: 'var(--text-primary)' }}>Current Stage</h4>
+              <div className="flex items-center space-x-3 p-3 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#10b981' }}></div>
+                <div>
+                  <div className="font-medium text-green-700">Stage 2: Advancing</div>
+                  <div className="text-xs text-green-600">Strong uptrend confirmed</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Active Signals */}
+            <div className="space-y-2 text-sm">
+              <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Active Signals</h4>
+              <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle size={14} className="text-green-500" />
+                  <span style={{ color: 'var(--text-primary)' }}>RSI Momentum</span>
+                </div>
+                <span className="text-green-500 font-medium">BUY</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                <div className="flex items-center space-x-2">
+                  <CheckCircle size={14} className="text-green-500" />
+                  <span style={{ color: 'var(--text-primary)' }}>VWAP Support</span>
+                </div>
+                <span className="text-green-500 font-medium">HOLD</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle size={14} className="text-yellow-500" />
+                  <span style={{ color: 'var(--text-primary)' }}>CVD Divergence</span>
+                </div>
+                <span className="text-yellow-500 font-medium">WATCH</span>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            <div className="space-y-3 text-sm">
+              <h4 className="font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Recommendations</h4>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <TrendingUp size={14} style={{ color: 'var(--highlight)' }} />
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Primary Action</span>
+                </div>
+                <p style={{ color: 'var(--text-secondary)' }}>Add to position on VWAP pullback. Target: 5% above current levels.</p>
+              </div>
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Clock size={14} style={{ color: 'var(--highlight)' }} />
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Risk Management</span>
+                </div>
+                <p style={{ color: 'var(--text-secondary)' }}>Set stop-loss at 2.5x ATR below VWAP support level.</p>
               </div>
             </div>
           </div>
@@ -202,6 +407,192 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>200 SMA:</span>
                       <input type="checkbox" defaultChecked className="rounded" />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>VWAP</span>
+                    <span className="text-sm font-medium text-blue-600">$158.34</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
+                      <select className="w-16 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                        <option value="intraday">Intraday</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Deviation:</span>
+                      <input type="number" defaultValue="1" step="0.1" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Volume Indicators */}
+            <div>
+              <h4 className="font-medium mb-3 flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
+                <LineChart size={16} />
+                <span>Volume Indicators</span>
+              </h4>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Volume Profile</span>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>POC Levels:</span>
+                      <input type="number" defaultValue="5" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Lookback:</span>
+                      <select className="w-16 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                        <option value="20">20d</option>
+                        <option value="50">50d</option>
+                        <option value="100">100d</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>CVD (Cumulative Volume Delta)</span>
+                    <span className="text-sm font-medium text-yellow-600">+1.2M</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Threshold:</span>
+                      <input type="number" defaultValue="0.5" step="0.1" className="w-16 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>OBV (On-Balance Volume)</span>
+                    <span className="text-sm font-medium text-green-600">+85.2M</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <div className="flex items-center space-x-1">
+                      <TrendingUp size={10} className="text-green-500" />
+                      <span className="text-green-500">Trend Confirming</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Volatility Indicators */}
+            <div>
+              <h4 className="font-medium mb-3 flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
+                <AlertTriangle size={16} />
+                <span>Volatility Indicators</span>
+              </h4>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>ATR</span>
+                    <span className="text-sm font-medium" style={{ color: 'var(--highlight)' }}>2.34</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
+                      <input type="number" defaultValue="14" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Multiplier:</span>
+                      <input type="number" defaultValue="2.0" step="0.1" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Bollinger Bands</span>
+                    <input type="checkbox" className="rounded" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
+                      <input type="number" defaultValue="20" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Std Dev:</span>
+                      <input type="number" defaultValue="2" step="0.1" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Momentum Indicators */}
+            <div>
+              <h4 className="font-medium mb-3 flex items-center space-x-2" style={{ color: 'var(--text-primary)' }}>
+                <Target size={16} />
+                <span>Momentum Indicators</span>
+              </h4>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>RSI</span>
+                    <span className="text-sm font-medium text-green-600">64.2</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
+                      <input type="number" defaultValue="14" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Overbought:</span>
+                      <input type="number" defaultValue="70" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Oversold:</span>
+                      <input type="number" defaultValue="30" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>MACD</span>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Fast:</span>
+                      <input type="number" defaultValue="12" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Slow:</span>
+                      <input type="number" defaultValue="26" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
+                    </div>
+                    <div className="flex justify-between">
+                      <span style={{ color: 'var(--text-secondary)' }}>Signal:</span>
+                      <input type="number" defaultValue="9" className="w-12 px-1 text-xs border rounded" 
+                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} />
                     </div>
                   </div>
                 </div>
@@ -598,7 +989,7 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
       size={leftPanelWidth}
       visible={leftPanelVisible}
       onResize={setLeftPanelWidth}
-      className={className}
+      className={`sidebar-panel ${className}`}
     >
       {/* Sidebar Tabs */}
       <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--border)' }}>

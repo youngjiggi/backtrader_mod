@@ -14,6 +14,7 @@ interface StrategyLayoutProps {
   variant?: 'single' | 'multi';
   showBottomPanel?: boolean;
   sidebarContent?: (tabId: string, strategy?: any) => React.ReactNode;
+  activeTimeframe?: string; // Current active timeframe
   className?: string;
 }
 
@@ -100,53 +101,49 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
   variant = 'single',
   showBottomPanel = true,
   sidebarContent,
+  activeTimeframe = '1D',
   className = ''
 }) => {
   const { bottomPanelVisible } = usePanelManager();
 
   return (
-    <div className={`flex flex-1 overflow-hidden ${className}`}>
-      {/* Left Sidebar */}
-      <SidebarPanel 
-        strategy={variant === 'multi' ? strategies?.[0] : strategy}
-        renderTabContent={sidebarContent}
-      />
+    <div className={`flex flex-col flex-1 overflow-hidden ${className}`}>
+      {/* Top Area with Sidebar and Main Content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar */}
+        <SidebarPanel 
+          strategy={variant === 'multi' ? strategies?.[0] : strategy}
+          renderTabContent={sidebarContent}
+        />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Chart Area */}
-        <div className="flex flex-1">
-          <div className="flex-1 flex flex-col">
-            {/* Chart Content */}
-            <div className="flex-1 p-6">
-              {children}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Chart Area */}
+          <div className="flex flex-1">
+            <div className="flex-1 flex flex-col">
+              {/* Chart Content */}
+              <div className="flex-1 p-6">
+                {children}
+              </div>
             </div>
-            
-            {/* Bottom Panel - Integrated into chart area for multi-view */}
-            {showBottomPanel && variant === 'multi' && (
-              <BottomPanel 
-                strategy={strategies?.[0]}
-                variant="integrated"
-                className="h-80"
-              />
-            )}
+
+            {/* Right Analytics Panel */}
+            <AnalyticsPanel 
+              strategy={variant === 'multi' ? strategies?.[0] : strategy}
+              variant={variant}
+              activeTimeframe={activeTimeframe}
+            />
           </div>
-
-          {/* Right Analytics Panel */}
-          <AnalyticsPanel 
-            strategy={variant === 'multi' ? strategies?.[0] : strategy}
-            variant={variant}
-          />
         </div>
-
-        {/* Bottom Panel - Standalone for single view */}
-        {showBottomPanel && variant === 'single' && bottomPanelVisible && (
-          <BottomPanel 
-            strategy={strategy}
-            variant="standalone"
-          />
-        )}
       </div>
+
+      {/* Bottom Panel - Full width spanning entire screen width */}
+      {showBottomPanel && bottomPanelVisible && (
+        <BottomPanel 
+          strategy={variant === 'multi' ? strategies?.[0] : strategy}
+          variant="standalone"
+        />
+      )}
     </div>
   );
 };

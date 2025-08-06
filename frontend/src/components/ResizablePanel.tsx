@@ -75,10 +75,10 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
   }[position];
 
   return (
-    <div className="relative flex">
+    <div className={`relative ${position === 'bottom' ? 'w-full' : 'flex'}`}>
       {/* Panel Content */}
       <div
-        className={`${borderClass} flex flex-col ${className}`}
+        className={`${borderClass} flex flex-col ${position === 'bottom' ? 'w-full' : ''} ${className}`}
         style={{
           ...sizeStyle,
           backgroundColor: 'var(--surface)',
@@ -115,7 +115,7 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
 
       {position === 'bottom' && (
         <div
-          className={resizeHandleClass}
+          className={`${resizeHandleClass} w-full`}
           onMouseDown={handleMouseDown}
           style={{ backgroundColor: 'var(--border)' }}
         >
