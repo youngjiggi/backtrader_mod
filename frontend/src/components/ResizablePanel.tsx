@@ -64,8 +64,8 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
   const sizeStyle = isVertical ? { width: `${size}px` } : { height: `${size}px` };
   
   const resizeHandleClass = `
-    ${isVertical ? 'w-1 cursor-col-resize' : 'h-1 cursor-row-resize'}
-    hover:bg-blue-500 transition-colors group relative
+    ${isVertical ? 'w-3 cursor-col-resize' : 'h-3 cursor-row-resize'}
+    hover:bg-blue-500 transition-colors group relative z-10
   `;
 
   const borderClass = {
@@ -76,6 +76,32 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
 
   return (
     <div className={`relative ${position === 'bottom' ? 'w-full' : 'flex'}`}>
+      {/* Resize Handle - Position based on panel type */}
+      {position === 'right' && (
+        <div
+          className={resizeHandleClass}
+          onMouseDown={handleMouseDown}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
+        >
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical size={16} style={{ color: 'var(--text-secondary)' }} />
+          </div>
+        </div>
+      )}
+
+      {/* Bottom panel resize handle (above content) */}
+      {position === 'bottom' && (
+        <div
+          className={`${resizeHandleClass} w-full`}
+          onMouseDown={handleMouseDown}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
+        >
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <GripVertical size={16} style={{ color: 'var(--text-secondary)' }} className="rotate-90" />
+          </div>
+        </div>
+      )}
+
       {/* Panel Content */}
       <div
         className={`${borderClass} flex flex-col ${position === 'bottom' ? 'w-full' : ''} ${className}`}
@@ -88,39 +114,15 @@ const ResizablePanel: React.FC<ResizablePanelProps> = ({
         {children}
       </div>
 
-      {/* Resize Handle */}
-      {position === 'right' && (
-        <div
-          className={resizeHandleClass}
-          onMouseDown={handleMouseDown}
-          style={{ backgroundColor: 'var(--border)' }}
-        >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical size={16} style={{ color: 'var(--text-secondary)' }} />
-          </div>
-        </div>
-      )}
-
+      {/* Resize Handle for left panel (after content) */}
       {position === 'left' && (
         <div
           className={resizeHandleClass}
           onMouseDown={handleMouseDown}
-          style={{ backgroundColor: 'var(--border)' }}
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}
         >
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical size={16} style={{ color: 'var(--text-secondary)' }} />
-          </div>
-        </div>
-      )}
-
-      {position === 'bottom' && (
-        <div
-          className={`${resizeHandleClass} w-full`}
-          onMouseDown={handleMouseDown}
-          style={{ backgroundColor: 'var(--border)' }}
-        >
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <GripVertical size={16} style={{ color: 'var(--text-secondary)' }} className="rotate-90" />
           </div>
         </div>
       )}

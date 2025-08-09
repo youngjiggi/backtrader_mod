@@ -107,43 +107,40 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
   const { bottomPanelVisible } = usePanelManager();
 
   return (
-    <div className={`flex flex-col flex-1 overflow-hidden ${className}`}>
-      {/* Top Area with Sidebar and Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <SidebarPanel 
-          strategy={variant === 'multi' ? strategies?.[0] : strategy}
-          renderTabContent={sidebarContent}
-        />
+    <div className={`flex flex-1 overflow-hidden ${className}`}>
+      {/* Left Sidebar - Full Height */}
+      <SidebarPanel 
+        strategy={variant === 'multi' ? strategies?.[0] : strategy}
+        renderTabContent={sidebarContent}
+      />
 
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Chart Area */}
-          <div className="flex flex-1">
-            <div className="flex-1 flex flex-col">
-              {/* Chart Content */}
-              <div className="flex-1 p-6">
-                {children}
-              </div>
+      {/* Right Side Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Area: Chart + Right Panel */}
+        <div className="flex flex-1">
+          <div className="flex-1 flex flex-col">
+            {/* Chart Content */}
+            <div className="flex-1 p-6">
+              {children}
             </div>
-
-            {/* Right Analytics Panel */}
-            <AnalyticsPanel 
-              strategy={variant === 'multi' ? strategies?.[0] : strategy}
-              variant={variant}
-              activeTimeframe={activeTimeframe}
-            />
           </div>
-        </div>
-      </div>
 
-      {/* Bottom Panel - Full width spanning entire screen width */}
-      {showBottomPanel && bottomPanelVisible && (
-        <BottomPanel 
-          strategy={variant === 'multi' ? strategies?.[0] : strategy}
-          variant="standalone"
-        />
-      )}
+          {/* Right Analytics Panel */}
+          <AnalyticsPanel 
+            strategy={variant === 'multi' ? strategies?.[0] : strategy}
+            variant={variant}
+            activeTimeframe={activeTimeframe}
+          />
+        </div>
+
+        {/* Bottom Panel - Spans width of main content area (excludes sidebar) */}
+        {showBottomPanel && bottomPanelVisible && (
+          <BottomPanel 
+            strategy={variant === 'multi' ? strategies?.[0] : strategy}
+            variant="standalone"
+          />
+        )}
+      </div>
     </div>
   );
 };
