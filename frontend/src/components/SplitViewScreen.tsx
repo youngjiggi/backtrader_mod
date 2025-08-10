@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { ArrowLeft, Settings, TrendingUp, BarChart3, Activity, Target, DollarSign, Calendar, ChevronDown, ChevronUp, Play, Cog, Users, Zap, LineChart, PieChart, GripVertical, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Grid, Square, Columns, Rows } from 'lucide-react';
+import { ArrowLeft, Settings, TrendingUp, BarChart3, Activity, Target, DollarSign, Calendar, ChevronDown, ChevronUp, Play, Cog, Users, Zap, LineChart, PieChart, GripVertical, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Grid, Square, Columns, Rows, SquareStack } from 'lucide-react';
 import { RecentRun } from './RecentRunsCarousel';
-import StageAnalysisChart from './StageAnalysisChart';
+import { PanelManagerProvider, usePanelManager } from './PanelManager';
+import { AnalyticsContent } from './AnalyticsPanel';
 
 export type SplitLayout = '1x1' | '2x1' | '1x2' | '2x2';
 
@@ -17,7 +18,7 @@ interface TimeframeView {
   active: boolean;
 }
 
-const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) => {
+const SplitViewScreenContent: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['performance']));
   const [viewMode, setViewMode] = useState<'single' | 'portfolio'>('single');
@@ -25,14 +26,26 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
   const [layout, setLayout] = useState<SplitLayout>('2x2');
   const [showLayoutSelector, setShowLayoutSelector] = useState(false);
   const [activeChart, setActiveChart] = useState('1D');
+  const [combinedMode, setCombinedMode] = useState<'configuration' | 'dashboard'>('configuration');
   
-  // Panel state management
-  const [leftPanelWidth, setLeftPanelWidth] = useState(320);
-  const [rightPanelWidth, setRightPanelWidth] = useState(320);
-  const [bottomPanelHeight, setBottomPanelHeight] = useState(300);
-  const [leftPanelVisible, setLeftPanelVisible] = useState(true);
-  const [rightPanelVisible, setRightPanelVisible] = useState(true);
-  const [bottomPanelVisible, setBottomPanelVisible] = useState(true);
+  // Use PanelManager instead of local state
+  const { 
+    leftPanelWidth, 
+    rightPanelWidth, 
+    bottomPanelHeight,
+    leftPanelVisible, 
+    rightPanelVisible, 
+    bottomPanelVisible,
+    layoutMode,
+    dashboardSettings,
+    setLeftPanelWidth,
+    setRightPanelWidth,
+    setBottomPanelHeight,
+    toggleLeftPanel,
+    toggleRightPanel,
+    toggleBottomPanel,
+    toggleLayoutMode
+  } = usePanelManager();
   
   // Resize refs
   const leftResizeRef = useRef<HTMLDivElement>(null);
@@ -87,10 +100,10 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
       const newWidth = Math.max(200, Math.min(600, window.innerWidth - e.clientX));
       setRightPanelWidth(newWidth);
     } else if (isResizing.current === 'bottom') {
-      const newHeight = Math.max(200, Math.min(500, window.innerHeight - e.clientY));
+      const newHeight = Math.max(200, Math.min(window.innerHeight * 0.8, window.innerHeight - e.clientY));
       setBottomPanelHeight(newHeight);
     }
-  }, []);
+  }, [setLeftPanelWidth, setRightPanelWidth, setBottomPanelHeight]);
 
   const handleMouseUp = useCallback(() => {
     isResizing.current = null;
@@ -101,32 +114,6 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
   }, [handleMouseMove]);
 
   // Mock chart data generation for the strategy
-  const generateMockChartData = () => {
-    const priceData = Array.from({ length: 100 }, (_, i) => ({
-      date: new Date(Date.now() - (100 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      open: 100 + Math.random() * 50,
-      high: 110 + Math.random() * 60,
-      low: 90 + Math.random() * 40,
-      close: 105 + Math.random() * 45,
-      volume: Math.floor(1000000 + Math.random() * 5000000)
-    }));
-
-    return {
-      priceData,
-      movingAverage30W: priceData.map(p => ({ date: p.date, value: p.close * 0.95 })),
-      stageAnalysis: {
-        stages: priceData.map((p, i) => ({
-          date: p.date,
-          stage: (Math.floor(i / 25) + 1) as 1 | 2 | 3 | 4,
-          sataScore: 5 + Math.random() * 5
-        })),
-        relativeStrength: priceData.map(p => ({ date: p.date, value: Math.random() * 100 })),
-        momentum: priceData.map(p => ({ date: p.date, value: Math.random() * 2 - 1 })),
-        stageTransitions: []
-      },
-      trades: []
-    };
-  };
 
   const getDisplayedTimeframes = () => {
     const config = layoutConfigs[layout];
@@ -145,7 +132,7 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
         Chart Layout
       </h3>
       <div className="grid grid-cols-2 gap-3">
-        {Object.entries(layoutConfigs).map(([layoutKey, config]) => (
+        {Object.entries(layoutConfigs).map(([layoutKey]) => (
           <button
             key={layoutKey}
             onClick={() => {
@@ -176,7 +163,7 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
     </div>
   );
 
-  const renderMultiTimeframeChart = (timeframe: TimeframeView, index: number) => (
+  const renderMultiTimeframeChart = (timeframe: TimeframeView) => (
     <div
       key={timeframe.id}
       className={`border rounded-lg overflow-hidden cursor-pointer transition-all duration-200 ${
@@ -184,8 +171,7 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
       }`}
       style={{
         backgroundColor: 'var(--surface)',
-        borderColor: timeframe.active ? 'var(--accent)' : 'var(--border)',
-        ringColor: timeframe.active ? 'var(--accent)' : 'transparent'
+        borderColor: timeframe.active ? 'var(--accent)' : 'var(--border)'
       }}
       onClick={() => setActiveChart(timeframe.id)}
     >
@@ -275,12 +261,10 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
             </div>
 
             {/* Chart Content */}
-            <div className="relative z-10 w-full h-full">
-              <StageAnalysisChart
-                strategy={{...strategy, timeframe: timeframe.timeframe}}
-                timeInterval={timeframe.timeframe}
-                className="w-full h-full"
-              />
+            <div className="relative z-10 w-full h-full flex items-center justify-center">
+              <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {timeframe.timeframe} Chart
+              </div>
             </div>
 
             {/* Active Indicator */}
@@ -439,8 +423,25 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
 
           {/* Panel Toggle Buttons */}
           <div className="flex items-center space-x-1">
+            {/* Panel Layout Toggle */}
             <button
-              onClick={() => setLeftPanelVisible(!leftPanelVisible)}
+              onClick={toggleLayoutMode}
+              className="flex items-center space-x-1 px-2 py-1.5 rounded border transition-colors hover:bg-opacity-80"
+              style={{
+                backgroundColor: layoutMode === 'combined' ? 'var(--accent)' : 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: layoutMode === 'combined' ? 'var(--bg-primary)' : 'var(--text-primary)'
+              }}
+              title={layoutMode === 'separate' ? 'Switch to Combined Panel Mode' : 'Switch to Separate Panels Mode'}
+            >
+              {layoutMode === 'separate' ? <Columns size={12} /> : <SquareStack size={12} />}
+              <span className="text-xs">
+                {layoutMode === 'separate' ? 'Sep' : 'Com'}
+              </span>
+            </button>
+            
+            <button
+              onClick={toggleLeftPanel}
               className="p-1.5 rounded border transition-colors hover:bg-opacity-80"
               style={{
                 backgroundColor: leftPanelVisible ? 'var(--accent)' : 'var(--surface)',
@@ -451,20 +452,22 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
             >
               {leftPanelVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
             </button>
+            {layoutMode === 'separate' && (
+              <button
+                onClick={toggleRightPanel}
+                className="p-1.5 rounded border transition-colors hover:bg-opacity-80"
+                style={{
+                  backgroundColor: rightPanelVisible ? 'var(--accent)' : 'var(--surface)',
+                  borderColor: 'var(--border)',
+                  color: rightPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
+                }}
+                title={rightPanelVisible ? 'Hide Right Panel' : 'Show Right Panel'}
+              >
+                {rightPanelVisible ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+              </button>
+            )}
             <button
-              onClick={() => setRightPanelVisible(!rightPanelVisible)}
-              className="p-1.5 rounded border transition-colors hover:bg-opacity-80"
-              style={{
-                backgroundColor: rightPanelVisible ? 'var(--accent)' : 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: rightPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
-              }}
-              title={rightPanelVisible ? 'Hide Right Panel' : 'Show Right Panel'}
-            >
-              {rightPanelVisible ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-            </button>
-            <button
-              onClick={() => setBottomPanelVisible(!bottomPanelVisible)}
+              onClick={toggleBottomPanel}
               className="p-1.5 rounded border transition-colors hover:bg-opacity-80"
               style={{
                 backgroundColor: bottomPanelVisible ? 'var(--accent)' : 'var(--surface)',
@@ -518,7 +521,7 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar - Same as StrategyViewScreen */}
+        {/* Left Sidebar - Enhanced with combined mode support */}
         {leftPanelVisible && (
           <div className="relative flex">
             <div
@@ -529,35 +532,78 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
                 borderColor: 'var(--border)'
               }}
             >
-          {/* Sidebar Tabs */}
+          {/* Sidebar Header with Combined Mode Toggle */}
           <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--border)' }}>
-            <div className="space-y-1">
-              {sidebarTabs.map((tab) => {
-                const IconComponent = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      activeTab === tab.id ? 'ring-2' : ''
-                    }`}
-                    style={{
-                      backgroundColor: activeTab === tab.id ? 'var(--accent)' : 'transparent',
-                      color: activeTab === tab.id ? 'var(--bg-primary)' : 'var(--text-primary)',
-                      '--tw-ring-color': 'var(--accent)'
-                    }}
-                  >
-                    <IconComponent size={16} />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+            {layoutMode === 'combined' && (
+              <div className="flex items-center space-x-2 mb-4">
+                <button
+                  onClick={() => setCombinedMode('configuration')}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1`}
+                  style={{
+                    backgroundColor: combinedMode === 'configuration' ? 'var(--accent)' : 'var(--surface)',
+                    color: combinedMode === 'configuration' ? 'var(--bg-primary)' : 'var(--text-primary)',
+                    border: `1px solid ${combinedMode === 'configuration' ? 'var(--accent)' : 'var(--border)'}`
+                  }}
+                >
+                  <Cog size={16} />
+                  <span>Configuration</span>
+                </button>
+                <button
+                  onClick={() => setCombinedMode('dashboard')}
+                  className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1`}
+                  style={{
+                    backgroundColor: combinedMode === 'dashboard' ? 'var(--accent)' : 'var(--surface)',
+                    color: combinedMode === 'dashboard' ? 'var(--bg-primary)' : 'var(--text-primary)',
+                    border: `1px solid ${combinedMode === 'dashboard' ? 'var(--accent)' : 'var(--border)'}`
+                  }}
+                >
+                  <BarChart3 size={16} />
+                  <span>Dashboard</span>
+                </button>
+              </div>
+            )}
+            
+            {/* Show tabs only in separate mode or when configuration is selected in combined mode */}
+            {(layoutMode === 'separate' || combinedMode === 'configuration') && (
+              <div className="space-y-1">
+                {sidebarTabs.map((tab) => {
+                  const IconComponent = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === tab.id ? 'ring-2' : ''
+                      }`}
+                      style={{
+                        backgroundColor: activeTab === tab.id ? 'var(--accent)' : 'transparent',
+                        color: activeTab === tab.id ? 'var(--bg-primary)' : 'var(--text-primary)',
+                        '--tw-ring-color': 'var(--accent)'
+                      }}
+                    >
+                      <IconComponent size={16} />
+                      <span>{tab.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* Sidebar Content - Same as StrategyViewScreen but contextual to active timeframe */}
+          {/* Sidebar Content */}
           <div className="flex-1 overflow-y-auto p-4">
-            {activeTab === 'overview' && (
+            {/* Show dashboard content when in combined mode and dashboard is selected */}
+            {layoutMode === 'combined' && combinedMode === 'dashboard' ? (
+              <AnalyticsContent 
+                strategy={strategy}
+                sataScore={8.2}
+                activeTimeframe={activeChart}
+                settings={dashboardSettings}
+              />
+            ) : (
+              /* Show configuration tabs */
+              <>
+                {activeTab === 'overview' && (
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
@@ -641,6 +687,8 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
                 </div>
               </div>
             )}
+              </>
+            )}
           </div>
         </div>
             
@@ -664,12 +712,12 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
             {/* Multi-Timeframe Chart Grid */}
             <div className="flex-1 p-6">
               <div className={`grid gap-4 h-full ${layoutConfigs[layout].gridClass}`}>
-                {displayedTimeframes.map((timeframe, index) => renderMultiTimeframeChart(timeframe, index))}
+                {displayedTimeframes.map((timeframe) => renderMultiTimeframeChart(timeframe))}
               </div>
             </div>
 
-            {/* Right Analytics Panel - Same as StrategyViewScreen */}
-            {rightPanelVisible && (
+            {/* Right Analytics Panel - Only shown in separate mode */}
+            {layoutMode === 'separate' && rightPanelVisible && (
               <div className="relative flex">
                 {/* Right Panel Resize Handle */}
                 <div
@@ -1028,6 +1076,14 @@ const SplitViewScreen: React.FC<SplitViewScreenProps> = ({ strategy, onBack }) =
         </div>
       </div>
     </div>
+  );
+};
+
+const SplitViewScreen: React.FC<SplitViewScreenProps> = (props) => {
+  return (
+    <PanelManagerProvider>
+      <SplitViewScreenContent {...props} />
+    </PanelManagerProvider>
   );
 };
 

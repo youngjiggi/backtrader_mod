@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen } from 'lucide-react';
+import { ArrowLeft, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Columns, SquareStack } from 'lucide-react';
 import { PanelManagerProvider, usePanelManager } from './PanelManager';
 import SidebarPanel from './SidebarPanel';
 import AnalyticsPanel from './AnalyticsPanel';
@@ -26,9 +26,11 @@ const StrategyLayoutHeader: React.FC<{
     leftPanelVisible, 
     rightPanelVisible, 
     bottomPanelVisible,
+    layoutMode,
     toggleLeftPanel,
     toggleRightPanel,
-    toggleBottomPanel
+    toggleBottomPanel,
+    toggleLayoutMode
   } = usePanelManager();
 
   return (
@@ -50,6 +52,23 @@ const StrategyLayoutHeader: React.FC<{
       </div>
 
       <div className="flex items-center space-x-2">
+        {/* Panel Layout Toggle */}
+        <button
+          onClick={toggleLayoutMode}
+          className="flex items-center space-x-2 px-3 py-2 rounded transition-colors"
+          style={{
+            backgroundColor: layoutMode === 'combined' ? 'var(--accent)' : 'var(--surface)',
+            border: `1px solid var(--border)`,
+            color: layoutMode === 'combined' ? 'var(--bg-primary)' : 'var(--text-primary)'
+          }}
+          title={layoutMode === 'separate' ? 'Switch to Combined Panel Mode' : 'Switch to Separate Panels Mode'}
+        >
+          {layoutMode === 'separate' ? <Columns size={14} /> : <SquareStack size={14} />}
+          <span className="text-xs">
+            {layoutMode === 'separate' ? 'Separate' : 'Combined'}
+          </span>
+        </button>
+
         {/* Panel Toggle Buttons */}
         <button
           onClick={toggleLeftPanel}
@@ -64,18 +83,20 @@ const StrategyLayoutHeader: React.FC<{
           {leftPanelVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
         </button>
 
-        <button
-          onClick={toggleRightPanel}
-          className="p-2 rounded transition-colors"
-          style={{
-            backgroundColor: rightPanelVisible ? 'var(--accent)' : 'var(--surface)',
-            border: `1px solid var(--border)`,
-            color: rightPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
-          }}
-          title={rightPanelVisible ? 'Hide Right Panel' : 'Show Right Panel'}
-        >
-          {rightPanelVisible ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-        </button>
+        {layoutMode === 'separate' && (
+          <button
+            onClick={toggleRightPanel}
+            className="p-2 rounded transition-colors"
+            style={{
+              backgroundColor: rightPanelVisible ? 'var(--accent)' : 'var(--surface)',
+              border: `1px solid var(--border)`,
+              color: rightPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
+            }}
+            title={rightPanelVisible ? 'Hide Right Panel' : 'Show Right Panel'}
+          >
+            {rightPanelVisible ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
+          </button>
+        )}
 
         <button
           onClick={toggleBottomPanel}
@@ -104,7 +125,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
   activeTimeframe = '1D',
   className = ''
 }) => {
-  const { bottomPanelVisible } = usePanelManager();
+  const { bottomPanelVisible, layoutMode } = usePanelManager();
 
   return (
     <div className={`flex flex-1 overflow-hidden ${className}`}>
@@ -112,6 +133,8 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
       <SidebarPanel 
         strategy={variant === 'multi' ? strategies?.[0] : strategy}
         renderTabContent={sidebarContent}
+        activeTimeframe={activeTimeframe}
+        sataScore={8.2} // TODO: Get from strategy data
       />
 
       {/* Right Side Content Area */}
@@ -120,17 +143,19 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
         <div className="flex flex-1">
           <div className="flex-1 flex flex-col">
             {/* Chart Content */}
-            <div className="flex-1 p-6">
+            <div className="flex-1 p-4">
               {children}
             </div>
           </div>
 
-          {/* Right Analytics Panel */}
-          <AnalyticsPanel 
-            strategy={variant === 'multi' ? strategies?.[0] : strategy}
-            variant={variant}
-            activeTimeframe={activeTimeframe}
-          />
+          {/* Right Analytics Panel - Only in separate mode */}
+          {layoutMode === 'separate' && (
+            <AnalyticsPanel 
+              strategy={variant === 'multi' ? strategies?.[0] : strategy}
+              variant={variant}
+              activeTimeframe={activeTimeframe}
+            />
+          )}
         </div>
 
         {/* Bottom Panel - Spans width of main content area (excludes sidebar) */}

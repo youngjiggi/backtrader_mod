@@ -71,7 +71,7 @@ const StrategyChartGrid: React.FC<StrategyChartGridProps> = ({
       </div>
 
       {/* Chart Area */}
-      <div className="h-64">
+      <div className="h-full">
         <AccountBalanceChart strategy={strategy} />
       </div>
 

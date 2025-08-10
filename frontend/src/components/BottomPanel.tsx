@@ -37,6 +37,7 @@ const BottomPanel: React.FC<BottomPanelProps> = ({
       size={bottomPanelHeight}
       visible={bottomPanelVisible}
       onResize={setBottomPanelHeight}
+      maxSize={Math.floor(window.innerHeight * 0.8)}
       className={`p-4 ${className}`}
     >
       <div className="h-full">

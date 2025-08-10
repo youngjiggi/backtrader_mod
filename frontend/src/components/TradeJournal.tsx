@@ -390,7 +390,7 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
         </div>
 
         {/* Scrollable Body */}
-        <div className="max-h-48 overflow-y-auto overflow-x-auto">
+        <div className="h-full overflow-y-auto overflow-x-auto">
           <table className="w-full">
             <tbody>
               {filteredTrades.map((trade, index) => (
