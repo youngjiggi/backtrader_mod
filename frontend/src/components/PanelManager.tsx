@@ -1,4 +1,17 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
+
+export type PanelLayoutMode = 'separate' | 'combined';
+
+export interface DashboardSettings {
+  strategyEvolution: boolean;
+  sataScore: boolean;
+  performanceTrend: boolean;
+  rsiSignal: boolean;
+  vwapSignal: boolean;
+  cvdSignal: boolean;
+  movingAverageSignal: boolean;
+  recommendations: boolean;
+}
 
 interface PanelState {
   leftPanelWidth: number;
@@ -7,6 +20,8 @@ interface PanelState {
   leftPanelVisible: boolean;
   rightPanelVisible: boolean;
   bottomPanelVisible: boolean;
+  layoutMode: PanelLayoutMode;
+  dashboardSettings: DashboardSettings;
 }
 
 interface PanelActions {
@@ -19,6 +34,10 @@ interface PanelActions {
   toggleLeftPanel: () => void;
   toggleRightPanel: () => void;
   toggleBottomPanel: () => void;
+  setLayoutMode: (mode: PanelLayoutMode) => void;
+  toggleLayoutMode: () => void;
+  setDashboardSettings: (settings: DashboardSettings) => void;
+  updateDashboardSetting: (key: keyof DashboardSettings, value: boolean) => void;
 }
 
 type PanelContextType = PanelState & PanelActions;
@@ -34,17 +53,94 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
   children, 
   initialState = {} 
 }) => {
+  // Load saved layout mode from localStorage
+  const getSavedLayoutMode = (): PanelLayoutMode => {
+    try {
+      const saved = localStorage.getItem('panelLayoutMode');
+      return (saved === 'combined' || saved === 'separate') ? saved : 'separate';
+    } catch {
+      return 'separate';
+    }
+  };
+
+  // Load saved dashboard settings from localStorage
+  const getSavedDashboardSettings = (): DashboardSettings => {
+    try {
+      const saved = localStorage.getItem('dashboardSettings');
+      if (saved) {
+        return { ...getDefaultDashboardSettings(), ...JSON.parse(saved) };
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return getDefaultDashboardSettings();
+  };
+
+  // Default dashboard settings - all features enabled
+  const getDefaultDashboardSettings = (): DashboardSettings => ({
+    strategyEvolution: true,
+    sataScore: true,
+    performanceTrend: true,
+    rsiSignal: true,
+    vwapSignal: true,
+    cvdSignal: true,
+    movingAverageSignal: true,
+    recommendations: true,
+  });
+
+  // Calculate responsive bottom panel height (half screen with constraints)
+  const getResponsiveBottomHeight = () => {
+    const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const halfScreen = Math.floor(screenHeight * 0.5);
+    const minHeight = 200;
+    const maxHeight = Math.floor(screenHeight * 0.8);
+    return Math.max(minHeight, Math.min(maxHeight, halfScreen));
+  };
+
   const defaultState: PanelState = {
     leftPanelWidth: 320,
     rightPanelWidth: 320,
-    bottomPanelHeight: 300,
+    bottomPanelHeight: getResponsiveBottomHeight(),
     leftPanelVisible: true,
     rightPanelVisible: true,
     bottomPanelVisible: true,
+    layoutMode: getSavedLayoutMode(),
+    dashboardSettings: getSavedDashboardSettings(),
     ...initialState
   };
 
   const [state, setState] = useState<PanelState>(defaultState);
+
+  // Handle window resize to update bottom panel height responsively
+  useEffect(() => {
+    const handleResize = () => {
+      const newBottomHeight = getResponsiveBottomHeight();
+      setState(prev => ({ ...prev, bottomPanelHeight: newBottomHeight }));
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
+
+  // Save layout mode to localStorage when it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('panelLayoutMode', state.layoutMode);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [state.layoutMode]);
+
+  // Save dashboard settings to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('dashboardSettings', JSON.stringify(state.dashboardSettings));
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [state.dashboardSettings]);
 
   const setLeftPanelWidth = useCallback((width: number) => {
     setState(prev => ({ ...prev, leftPanelWidth: width }));
@@ -55,7 +151,12 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
   }, []);
 
   const setBottomPanelHeight = useCallback((height: number) => {
-    setState(prev => ({ ...prev, bottomPanelHeight: height }));
+    // Apply same constraints when manually resizing
+    const screenHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+    const minHeight = 200;
+    const maxHeight = Math.floor(screenHeight * 0.8);
+    const constrainedHeight = Math.max(minHeight, Math.min(maxHeight, height));
+    setState(prev => ({ ...prev, bottomPanelHeight: constrainedHeight }));
   }, []);
 
   const setLeftPanelVisible = useCallback((visible: boolean) => {
@@ -82,6 +183,57 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
     setState(prev => ({ ...prev, bottomPanelVisible: !prev.bottomPanelVisible }));
   }, []);
 
+  const setLayoutMode = useCallback((mode: PanelLayoutMode) => {
+    setState(prev => {
+      const newState = { ...prev, layoutMode: mode };
+      
+      // Adjust panel widths and visibility based on layout mode
+      if (mode === 'combined') {
+        // In combined mode: expand left panel, hide right panel
+        newState.leftPanelWidth = 480;
+        newState.rightPanelVisible = false;
+      } else {
+        // In separate mode: restore original widths, show right panel
+        newState.leftPanelWidth = 320;
+        newState.rightPanelVisible = true;
+      }
+      
+      return newState;
+    });
+  }, []);
+
+  const toggleLayoutMode = useCallback(() => {
+    setState(prev => {
+      const newMode = prev.layoutMode === 'separate' ? 'combined' : 'separate';
+      const newState = { ...prev, layoutMode: newMode };
+      
+      // Adjust panel widths and visibility based on layout mode
+      if (newMode === 'combined') {
+        newState.leftPanelWidth = 480;
+        newState.rightPanelVisible = false;
+      } else {
+        newState.leftPanelWidth = 320;
+        newState.rightPanelVisible = true;
+      }
+      
+      return newState;
+    });
+  }, []);
+
+  const setDashboardSettings = useCallback((settings: DashboardSettings) => {
+    setState(prev => ({ ...prev, dashboardSettings: settings }));
+  }, []);
+
+  const updateDashboardSetting = useCallback((key: keyof DashboardSettings, value: boolean) => {
+    setState(prev => ({
+      ...prev,
+      dashboardSettings: {
+        ...prev.dashboardSettings,
+        [key]: value
+      }
+    }));
+  }, []);
+
   const contextValue: PanelContextType = {
     ...state,
     setLeftPanelWidth,
@@ -92,7 +244,11 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
     setBottomPanelVisible,
     toggleLeftPanel,
     toggleRightPanel,
-    toggleBottomPanel
+    toggleBottomPanel,
+    setLayoutMode,
+    toggleLayoutMode,
+    setDashboardSettings,
+    updateDashboardSetting
   };
 
   return (

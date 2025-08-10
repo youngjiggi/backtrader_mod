@@ -1,7 +1,7 @@
 import React from 'react';
 import { PieChart, Activity, TrendingUp, Target } from 'lucide-react';
 import ResizablePanel from './ResizablePanel';
-import { usePanelManager } from './PanelManager';
+import { usePanelManager, DashboardSettings } from './PanelManager';
 
 interface AnalyticsPanelProps {
   strategy?: any; // Replace with proper strategy type
@@ -11,19 +11,23 @@ interface AnalyticsPanelProps {
   className?: string;
 }
 
-const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
+// Extracted content component for reuse in combined mode
+export const AnalyticsContent: React.FC<{
+  strategy?: any;
+  sataScore?: number;
+  activeTimeframe?: string;
+  settings?: DashboardSettings;
+}> = ({
   strategy,
   sataScore = 8.2,
   activeTimeframe = '1D',
-  className = ''
-}) => {
-  const { rightPanelWidth, rightPanelVisible, setRightPanelWidth } = usePanelManager();
-
-  const renderContent = () => (
+  settings
+}) => (
     <>
       {/* Strategy Improvement Metrics - Moved to top */}
-      <div className="mb-6">
-        <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Strategy Evolution</h3>
+      {(!settings || settings.strategyEvolution) && (
+        <div className="mb-6">
+          <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Strategy Evolution</h3>
         <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
           {/* Version Comparison */}
           <div className="mb-4">
@@ -55,10 +59,12 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             <div>✓ Adjusted position sizing</div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Enhanced SATA Score Display - Progressive Dot Fill */}
-      <div className="mb-6">
+      {(!settings || settings.sataScore) && (
+        <div className="mb-6">
         <div className="text-center p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
           {/* Dots grid filling top area - 4 rows of 10 dots each */}
           <div className="mb-4">
@@ -117,10 +123,12 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Sharpe</div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Performance Trend Chart */}
-      <div className="mb-6">
+      {(!settings || settings.performanceTrend) && (
+        <div className="mb-6">
         <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Performance Trend</h3>
         <div className="p-4 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
           {/* Simple line chart visualization */}
@@ -169,66 +177,77 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </div>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Key Indicators/Signals */}
-      <div className="mb-6">
-        <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Active Signals ({activeTimeframe})</h3>
-        <div className="space-y-2">
-          {/* RSI Signal */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <div>
-                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>RSI Momentum</div>
-                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>RSI: 68.2 (Strong)</div>
+      {((!settings || settings.rsiSignal) || (!settings || settings.vwapSignal) || (!settings || settings.cvdSignal) || (!settings || settings.movingAverageSignal)) && (
+        <div className="mb-6">
+          <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Active Signals ({activeTimeframe})</h3>
+          <div className="space-y-2">
+            {/* RSI Signal */}
+            {(!settings || settings.rsiSignal) && (
+              <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div>
+                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>RSI Momentum</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>RSI: 68.2 (Strong)</div>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-green-600">BUY</span>
               </div>
-            </div>
-            <span className="text-sm font-medium text-green-600">BUY</span>
-          </div>
+            )}
 
-          {/* VWAP Signal */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <div>
-                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>VWAP Support</div>
-                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Price: 2.1% above VWAP</div>
+            {/* VWAP Signal */}
+            {(!settings || settings.vwapSignal) && (
+              <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div>
+                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>VWAP Support</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Price: 2.1% above VWAP</div>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-green-600">HOLD</span>
               </div>
-            </div>
-            <span className="text-sm font-medium text-green-600">HOLD</span>
-          </div>
+            )}
 
-          {/* CVD Signal */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-              <div>
-                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>CVD Divergence</div>
-                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Minor negative divergence</div>
+            {/* CVD Signal */}
+            {(!settings || settings.cvdSignal) && (
+              <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                  <div>
+                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>CVD Divergence</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Minor negative divergence</div>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-yellow-600">WATCH</span>
               </div>
-            </div>
-            <span className="text-sm font-medium text-yellow-600">WATCH</span>
-          </div>
+            )}
 
-          {/* Moving Average Signal */}
-          <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
-            <div className="flex items-center space-x-3">
-              <div className="w-2 h-2 rounded-full bg-green-500"></div>
-              <div>
-                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Moving Averages</div>
-                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Above 50 & 150 SMA</div>
+            {/* Moving Average Signal */}
+            {(!settings || settings.movingAverageSignal) && (
+              <div className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <div>
+                    <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Moving Averages</div>
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Above 50 & 150 SMA</div>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-green-600">BULLISH</span>
               </div>
-            </div>
-            <span className="text-sm font-medium text-green-600">BULLISH</span>
+            )}
           </div>
         </div>
-      </div>
-
+      )}
 
       {/* Quick Actions */}
-      <div>
-        <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recommendations</h3>
+      {(!settings || settings.recommendations) && (
+        <div>
+          <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Recommendations</h3>
         <div className="space-y-2">
           <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
             <div className="flex items-center space-x-2 mb-1">
@@ -249,9 +268,18 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
             </p>
           </div>
         </div>
-      </div>
+        </div>
+      )}
     </>
-  );
+);
+
+const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
+  strategy,
+  sataScore = 8.2,
+  activeTimeframe = '1D',
+  className = ''
+}) => {
+  const { rightPanelWidth, rightPanelVisible, setRightPanelWidth, dashboardSettings } = usePanelManager();
 
   return (
     <ResizablePanel
@@ -261,7 +289,12 @@ const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
       onResize={setRightPanelWidth}
       className={`p-6 ${className}`}
     >
-      {renderContent()}
+      <AnalyticsContent 
+        strategy={strategy}
+        sataScore={sataScore}
+        activeTimeframe={activeTimeframe}
+        settings={dashboardSettings}
+      />
     </ResizablePanel>
   );
 };
