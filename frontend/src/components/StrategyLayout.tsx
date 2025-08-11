@@ -128,7 +128,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
   const { bottomPanelVisible, layoutMode } = usePanelManager();
 
   return (
-    <div className={`flex flex-1 overflow-hidden ${className}`}>
+    <div className={`flex flex-1 ${className}`}>
       {/* Left Sidebar - Full Height */}
       <SidebarPanel 
         strategy={variant === 'multi' ? strategies?.[0] : strategy}
@@ -175,7 +175,7 @@ const StrategyLayout: React.FC<StrategyLayoutProps> = (props) => {
 
   return (
     <PanelManagerProvider>
-      <div className="flex flex-col h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <StrategyLayoutHeader title={title} onBack={onBack} />
         <StrategyLayoutContent {...contentProps} />
       </div>

@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState } from 'react';
 
+export interface PortfolioPosition {
+  symbol: string;
+  shares: number;
+  averagePrice: number;
+  purchaseDate: string;
+  notes?: string;
+}
+
 export interface Watchlist {
   id: string;
   name: string;
@@ -7,11 +15,14 @@ export interface Watchlist {
   symbols: string[];
   createdAt: string;
   updatedAt: string;
+  type?: 'watchlist' | 'portfolio';
+  portfolioPositions?: PortfolioPosition[];
 }
 
 interface WatchlistContextType {
   watchlists: Watchlist[];
   addWatchlist: (watchlist: Omit<Watchlist, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  addPortfolio: (name: string, positions: PortfolioPosition[]) => void;
   updateWatchlist: (id: string, updates: Partial<Watchlist>) => void;
   deleteWatchlist: (id: string) => void;
   getWatchlist: (id: string) => Watchlist | undefined;
@@ -87,6 +98,24 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
     setWatchlists(prev => [...prev, newWatchlist]);
   };
 
+  const addPortfolio = (name: string, positions: PortfolioPosition[]) => {
+    const symbols = positions.map(pos => pos.symbol);
+    const description = `Portfolio with ${positions.length} positions: ${symbols.join(', ')}`;
+    
+    const newPortfolio: Watchlist = {
+      id: `portfolio_${Date.now()}`,
+      name,
+      description,
+      symbols,
+      type: 'portfolio',
+      portfolioPositions: positions,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setWatchlists(prev => [...prev, newPortfolio]);
+  };
+
   const updateWatchlist = (id: string, updates: Partial<Watchlist>) => {
     setWatchlists(prev =>
       prev.map(watchlist =>
@@ -110,6 +139,7 @@ export const WatchlistProvider: React.FC<WatchlistProviderProps> = ({ children }
       value={{
         watchlists,
         addWatchlist,
+        addPortfolio,
         updateWatchlist,
         deleteWatchlist,
         getWatchlist

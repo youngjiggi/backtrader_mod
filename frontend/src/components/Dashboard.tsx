@@ -581,9 +581,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
                   <div className="mb-3 p-3 rounded-full bg-white bg-opacity-20 group-hover:bg-opacity-30 transition-all backdrop-blur-sm">
                     <List size={24} />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-shadow">Manage Watchlists</h3>
+                  <h3 className="text-lg font-bold mb-2 text-shadow">Manage Lists</h3>
                   <p className="text-sm opacity-90 text-shadow">
-                    Organize and manage your symbol watchlists
+                    Organize and manage your symbol lists
                   </p>
                 </div>
               </button>

@@ -12,6 +12,7 @@
   --accent: #0099cc;
   --highlight: #4682b4;
   --border: #e0e0e0;
+  --accent-bg: #f0f9ff;
 }
 
 .dark {
@@ -24,6 +25,7 @@
   --accent: #00d4ff;
   --highlight: #87ceeb;
   --border: #333333;
+  --accent-bg: #0c4a6e;
 }
 
 body {

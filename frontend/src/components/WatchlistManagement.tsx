@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Search, List, Plus, Edit, Trash2, Copy } from 'lucide-react';
+import { ArrowLeft, Search, List, Plus, Edit, Trash2, Copy, User } from 'lucide-react';
 import { useWatchlist, Watchlist } from '../contexts/WatchlistContext';
 import ViewToggle from './ViewToggle';
 import SortableHeader from './SortableHeader';
 import WatchlistFormModal from './WatchlistFormModal';
 import WatchlistDetailModal from './WatchlistDetailModal';
+import PortfolioFormModal from './PortfolioFormModal';
 
 interface WatchlistManagementProps {
   onBack: () => void;
@@ -23,6 +24,8 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
   const [editingWatchlist, setEditingWatchlist] = useState<Watchlist | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedWatchlist, setSelectedWatchlist] = useState<Watchlist | null>(null);
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+  const [editingPortfolio, setEditingPortfolio] = useState<Watchlist | null>(null);
 
   // Helper functions
   const handleSort = (key: string) => {
@@ -96,9 +99,17 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
   };
 
   const handleEditFromDetail = (watchlist: Watchlist) => {
-    setEditingWatchlist(watchlist);
-    setIsDetailModalOpen(false);
-    setIsFormModalOpen(true);
+    if (watchlist.type === 'portfolio') {
+      // Route to Portfolio Editor
+      setEditingPortfolio(watchlist);
+      setIsDetailModalOpen(false);
+      setIsPortfolioModalOpen(true);
+    } else {
+      // Route to Watchlist Editor (existing behavior)
+      setEditingWatchlist(watchlist);
+      setIsDetailModalOpen(false);
+      setIsFormModalOpen(true);
+    }
   };
 
   const handleDeleteFromDetail = (watchlistId: string) => {
@@ -107,6 +118,12 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
     setSelectedWatchlist(null);
     setSelectedItems(prev => prev.filter(item => item !== watchlistId));
   };
+
+  const handleEditPortfolio = (portfolio: Watchlist) => {
+    setEditingPortfolio(portfolio);
+    setIsPortfolioModalOpen(true);
+  };
+
 
   // Filter watchlists
   const filteredWatchlists = watchlists.filter(watchlist => {
@@ -213,8 +230,21 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
                 />
               </td>
               <td className="py-4 px-4">
-                <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {watchlist.name}
+                <div className="flex items-center space-x-2">
+                  <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {watchlist.name}
+                  </div>
+                  {watchlist.type === 'portfolio' && (
+                    <span
+                      className="text-xs px-2 py-1 rounded font-medium"
+                      style={{
+                        backgroundColor: 'var(--accent)',
+                        color: 'var(--bg-primary)'
+                      }}
+                    >
+                      Portfolio
+                    </span>
+                  )}
                 </div>
               </td>
               <td className="py-4 px-4 max-w-xs">
@@ -315,10 +345,12 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
             selectedItems.includes(watchlist.id) ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20' : ''
           }`}
           style={{
-            backgroundColor: 'var(--surface)',
-            borderColor: 'var(--border)'
+            backgroundColor: watchlist.type === 'portfolio' ? 'var(--accent-bg, #f0f9ff)' : 'var(--surface)',
+            borderColor: watchlist.type === 'portfolio' ? 'var(--accent, #3b82f6)' : 'var(--border)',
+            borderWidth: watchlist.type === 'portfolio' ? '2px' : '1px'
           }}
           onClick={() => handleViewDetails(watchlist)}
+          onDoubleClick={() => watchlist.type === 'portfolio' ? handleEditPortfolio(watchlist) : null}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center space-x-2">
@@ -330,9 +362,22 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
                 style={{ accentColor: 'var(--accent)' }}
                 onClick={(e) => e.stopPropagation()}
               />
-              <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                {watchlist.name}
-              </h3>
+              <div className="flex items-center space-x-2">
+                <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  {watchlist.name}
+                </h3>
+                {watchlist.type === 'portfolio' && (
+                  <span
+                    className="text-xs px-2 py-1 rounded font-medium"
+                    style={{
+                      backgroundColor: 'var(--accent)',
+                      color: 'var(--bg-primary)'
+                    }}
+                  >
+                    Portfolio
+                  </span>
+                )}
+              </div>
             </div>
             <span
               className="text-xs px-2 py-1 rounded font-medium"
@@ -430,24 +475,6 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-4">
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors hover:bg-opacity-80"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)'
-              }}
-              title="Back to Dashboard"
-            >
-              <ArrowLeft size={20} />
-              <span className="text-sm font-medium">Back to Main</span>
-            </button>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              Watchlist Management
-            </h1>
-          </div>
-          <div className="flex items-center space-x-4">
             <ViewToggle view={view} onViewChange={setView} />
             <button
               onClick={() => {
@@ -463,6 +490,36 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
               <Plus size={16} />
               <span>New Watchlist</span>
             </button>
+            <button
+              onClick={() => setIsPortfolioModalOpen(true)}
+              className="flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors hover:opacity-90"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)'
+              }}
+            >
+              <User size={16} />
+              <span>New Portfolio</span>
+            </button>
+            <button
+              onClick={onBack}
+              className="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors hover:bg-opacity-80"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)'
+              }}
+              title="Back to Dashboard"
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back to Main</span>
+            </button>
+          </div>
+          <div className="flex items-center space-x-4">
+            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
+              List Management
+            </h1>
           </div>
         </div>
       </div>
@@ -580,6 +637,16 @@ const WatchlistManagement: React.FC<WatchlistManagementProps> = ({ onBack }) => 
         watchlist={selectedWatchlist}
         onEdit={handleEditFromDetail}
         onDelete={handleDeleteFromDetail}
+      />
+
+      {/* Portfolio Form Modal */}
+      <PortfolioFormModal
+        isOpen={isPortfolioModalOpen}
+        onClose={() => {
+          setIsPortfolioModalOpen(false);
+          setEditingPortfolio(null);
+        }}
+        editingPortfolio={editingPortfolio}
       />
     </div>
   );

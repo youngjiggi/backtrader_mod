@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, PieChart, LineChart, Zap, Target, TrendingUp, Settings, Calendar, TrendingDown, Pin, Star, Copy, Download, AlertTriangle, CheckCircle, Clock, Cog, BarChart2, Sliders, Info, Edit, Plus, X, ChevronDown, ChevronRight } from 'lucide-react';
+import { Users, PieChart, LineChart, Zap, Target, TrendingUp, Settings, Calendar, TrendingDown, Pin, Star, Copy, Download, AlertTriangle, CheckCircle, Clock, Cog, BarChart2, Sliders, Info, Edit, Plus, X, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import ResizablePanel from './ResizablePanel';
 import TabNavigation, { TabItem } from './TabNavigation';
 import { usePanelManager } from './PanelManager';
@@ -52,8 +52,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
   ]);
   const [newPortfolioInput, setNewPortfolioInput] = useState({ symbol: '', shares: '', avgCost: '', entryDate: '', allocationPercentage: '' });
   
-  // Position sizing accordion state
-  const [positionSizingExpanded, setPositionSizingExpanded] = useState<{[key: string]: boolean}>({});
   const [portfolioSettings, setPortfolioSettings] = useState({
     availableCash: 50000,
     maxPositions: 5,
@@ -163,11 +161,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
 
   const removeFromWatchlist = (symbol: string) => {
     setWatchlistItems(watchlistItems.filter(item => item.symbol !== symbol));
-    setPositionSizingExpanded(prev => {
-      const updated = { ...prev };
-      delete updated[`watchlist-${symbol}`];
-      return updated;
-    });
   };
 
   const togglePrimaryStock = (symbol: string) => {
@@ -202,9 +195,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
     setPortfolioPositions(portfolioPositions.filter(pos => pos.symbol !== symbol));
   };
 
-  const togglePositionSizing = (key: string) => {
-    setPositionSizingExpanded(prev => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const calculateCurrentInvestment = (position: any) => {
     return position.shares * position.avgCost;
@@ -296,6 +286,74 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
     </div>
   );
 
+  const NumberInput: React.FC<{
+    value: number;
+    onChange: (value: number) => void;
+    min?: number;
+    max?: number;
+    step?: number;
+    className?: string;
+    placeholder?: string;
+    prefix?: string;
+    suffix?: string;
+  }> = ({ value, onChange, min = 0, max, step = 1, className = '', placeholder, prefix, suffix }) => {
+    const handleIncrement = () => {
+      const newValue = Math.min(max ?? Infinity, value + step);
+      onChange(newValue);
+    };
+    
+    const handleDecrement = () => {
+      const newValue = Math.max(min, value - step);
+      onChange(newValue);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const inputValue = e.target.value === '' ? 0 : parseFloat(e.target.value);
+      if (!isNaN(inputValue)) {
+        const constrainedValue = Math.max(min, Math.min(max ?? Infinity, inputValue));
+        onChange(constrainedValue);
+      }
+    };
+
+    return (
+      <div className={`flex items-center ${className}`}>
+        <button
+          type="button"
+          onClick={handleDecrement}
+          disabled={value <= min}
+          className="flex items-center justify-center w-8 h-8 rounded hover:bg-opacity-20 hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed mr-1"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <ChevronDown size={14} />
+        </button>
+        <div className="flex items-center border rounded" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+          {prefix && <span className="px-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{prefix}</span>}
+          <input
+            type="number"
+            value={value}
+            onChange={handleInputChange}
+            className="text-center border-0 outline-none bg-transparent text-xs px-1 py-1"
+            style={{ color: 'var(--text-primary)', width: '40px' }}
+            min={min}
+            max={max}
+            step={step}
+            placeholder={placeholder}
+          />
+          {suffix && <span className="px-1 text-xs" style={{ color: 'var(--text-secondary)' }}>{suffix}</span>}
+        </div>
+        <button
+          type="button"
+          onClick={handleIncrement}
+          disabled={max !== undefined && value >= max}
+          className="flex items-center justify-center w-8 h-8 rounded hover:bg-opacity-20 hover:bg-blue-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed ml-1"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <ChevronUp size={14} />
+        </button>
+      </div>
+    );
+  };
+
   const defaultTabContent = (tabId: string, strategy?: any) => {
     switch (tabId) {
       case 'portfolio':
@@ -346,12 +404,9 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                 {/* Current Watchlist */}
                 <div className="space-y-2">
                   {watchlistItems.map((item, index) => {
-                    const positionKey = `watchlist-${item.symbol}`;
-                    const isExpanded = positionSizingExpanded[positionKey];
-                    const allocationAmount = calculateMaxAllocationAmount(item.allocationPercentage);
                     
                     return (
-                      <div key={positionKey} className="border rounded" 
+                      <div key={`watchlist-${item.symbol}`} className="border rounded" 
                         style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                         
                         {/* Main row */}
@@ -360,21 +415,19 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                             <span className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{item.symbol}</span>
                             <button
                               onClick={() => togglePrimaryStock(item.symbol)}
-                              className={`text-xs px-3 py-2 rounded transition-colors hover:opacity-80 min-h-[36px] ${item.isPrimary ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                              className={`text-xs px-2 py-1 rounded transition-colors hover:opacity-80 ${item.isPrimary ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
                             >
                               {item.isPrimary ? 'Primary' : 'Watchlist'}
                             </button>
-                            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }}>
-                              {item.allocationPercentage}%
-                            </span>
-                            <button
-                              onClick={() => togglePositionSizing(positionKey)}
-                              className="flex items-center space-x-1 text-xs px-2 py-1 rounded transition-colors hover:bg-opacity-20 hover:bg-blue-500"
-                              style={{ color: 'var(--accent)' }}
-                            >
-                              <span>Position Sizing</span>
-                              {isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                            </button>
+                            <NumberInput
+                              value={item.allocationPercentage}
+                              onChange={(value) => updateWatchlistAllocation(item.symbol, value)}
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              suffix="%"
+                              className="w-16 h-[36px]"
+                            />
                           </div>
                           <button 
                             onClick={() => removeFromWatchlist(item.symbol)}
@@ -384,39 +437,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                             <X size={14} />
                           </button>
                         </div>
-                        
-                        {/* Position Sizing Section */}
-                        {isExpanded && (
-                          <div className="px-2 pb-2 border-t" style={{ borderColor: 'var(--border)' }}>
-                            <div className="p-3 rounded" style={{ backgroundColor: 'var(--surface)' }}>
-                              <div className="flex items-center justify-between mb-2">
-                                <label className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Portfolio Allocation:</label>
-                                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>(${allocationAmount.toLocaleString()} max)</span>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  step="0.5"
-                                  value={item.allocationPercentage}
-                                  onChange={(e) => updateWatchlistAllocation(item.symbol, parseFloat(e.target.value) || 0)}
-                                  className="flex-1 px-2 py-1 text-xs border rounded"
-                                  style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                                  placeholder="0"
-                                />
-                                <span className="text-xs">%</span>
-                                <button
-                                  onClick={() => updateWatchlistAllocation(item.symbol, portfolioSettings.positionSizeLimit)}
-                                  className="text-xs px-2 py-1 rounded transition-colors hover:opacity-80"
-                                  style={{ backgroundColor: 'var(--accent)', color: 'var(--bg-primary)' }}
-                                >
-                                  Default ({portfolioSettings.positionSizeLimit}%)
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -435,52 +455,52 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
               {/* Add New Position Form */}
               <div className="mb-4 p-3 rounded border" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
                 <div className="text-xs font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Add New Position</div>
-                <div className="grid grid-cols-5 gap-2 mb-2">
-                  <input
-                    type="text"
-                    placeholder="Ticker"
-                    value={newPortfolioInput.symbol}
-                    onChange={(e) => setNewPortfolioInput({...newPortfolioInput, symbol: e.target.value})}
-                    className="px-2 py-1 text-xs border rounded"
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Shares"
-                    value={newPortfolioInput.shares}
-                    onChange={(e) => setNewPortfolioInput({...newPortfolioInput, shares: e.target.value})}
-                    className="px-2 py-1 text-xs border rounded"
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  />
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Avg Cost"
-                    value={newPortfolioInput.avgCost}
-                    onChange={(e) => setNewPortfolioInput({...newPortfolioInput, avgCost: e.target.value})}
-                    className="px-2 py-1 text-xs border rounded"
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  />
-                  <input
-                    type="date"
-                    value={newPortfolioInput.entryDate}
-                    onChange={(e) => setNewPortfolioInput({...newPortfolioInput, entryDate: e.target.value})}
-                    className="px-2 py-1 text-xs border rounded"
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.5"
+                <div className="space-y-2 mb-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      placeholder="Ticker"
+                      value={newPortfolioInput.symbol}
+                      onChange={(e) => setNewPortfolioInput({...newPortfolioInput, symbol: e.target.value})}
+                      className="px-3 py-2 text-sm border rounded"
+                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    />
+                    <NumberInput
+                      value={parseInt(newPortfolioInput.shares) || 0}
+                      onChange={(value) => setNewPortfolioInput({...newPortfolioInput, shares: value.toString()})}
+                      min={0}
+                      step={1}
+                      placeholder="Shares"
+                      className="h-[36px]"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <NumberInput
+                      value={parseFloat(newPortfolioInput.avgCost) || 0}
+                      onChange={(value) => setNewPortfolioInput({...newPortfolioInput, avgCost: value.toString()})}
+                      min={0}
+                      step={0.01}
+                      prefix="$"
+                      placeholder="Avg Cost"
+                      className="h-[36px]"
+                    />
+                    <input
+                      type="date"
+                      value={newPortfolioInput.entryDate}
+                      onChange={(e) => setNewPortfolioInput({...newPortfolioInput, entryDate: e.target.value})}
+                      className="px-3 py-2 text-sm border rounded"
+                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    />
+                  </div>
+                  <NumberInput
+                    value={parseFloat(newPortfolioInput.allocationPercentage) || 0}
+                    onChange={(value) => setNewPortfolioInput({...newPortfolioInput, allocationPercentage: value.toString()})}
+                    min={0}
+                    max={100}
+                    step={0.5}
+                    suffix="%"
                     placeholder="Allocation %"
-                    value={newPortfolioInput.allocationPercentage}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setNewPortfolioInput({...newPortfolioInput, allocationPercentage: value});
-                    }}
-                    className="px-2 py-1 text-xs border rounded"
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                    className="h-[36px]"
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -529,51 +549,53 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                         </div>
                       </div>
                       {position.editing ? (
-                        <div className="grid grid-cols-4 gap-2 text-xs">
-                          <div>
-                            <label className="block mb-1" style={{ color: 'var(--text-secondary)' }}>Shares:</label>
-                            <input
-                              type="number"
-                              value={position.shares}
-                              onChange={(e) => updatePosition(position.symbol, 'shares', parseInt(e.target.value) || 0)}
-                              className="w-full px-1 py-0.5 text-xs border rounded"
-                              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-                            />
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Shares:</label>
+                              <NumberInput
+                                value={position.shares}
+                                onChange={(value) => updatePosition(position.symbol, 'shares', value)}
+                                min={0}
+                                step={1}
+                                className="w-full h-[32px]"
+                              />
+                            </div>
+                            <div>
+                              <label className="block mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Avg Cost:</label>
+                              <NumberInput
+                                value={position.avgCost}
+                                onChange={(value) => updatePosition(position.symbol, 'avgCost', value)}
+                                min={0}
+                                step={0.01}
+                                prefix="$"
+                                className="w-full h-[32px]"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <label className="block mb-1" style={{ color: 'var(--text-secondary)' }}>Avg Cost:</label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={position.avgCost}
-                              onChange={(e) => updatePosition(position.symbol, 'avgCost', parseFloat(e.target.value) || 0)}
-                              className="w-full px-1 py-0.5 text-xs border rounded"
-                              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-                            />
-                          </div>
-                          <div>
-                            <label className="block mb-1" style={{ color: 'var(--text-secondary)' }}>Entry Date:</label>
-                            <input
-                              type="date"
-                              value={position.entryDate}
-                              onChange={(e) => updatePosition(position.symbol, 'entryDate', e.target.value)}
-                              className="w-full px-1 py-0.5 text-xs border rounded"
-                              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-                            />
-                          </div>
-                          <div>
-                            <label className="block mb-1" style={{ color: 'var(--text-secondary)' }}>Allocation %:</label>
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.5"
-                              value={position.allocationPercentage}
-                              onChange={(e) => updatePosition(position.symbol, 'allocationPercentage', parseFloat(e.target.value) || 0)}
-                              className="w-full px-1 py-0.5 text-xs border rounded"
-                              style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}
-                              placeholder="%"
-                            />
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="block mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Entry Date:</label>
+                              <input
+                                type="date"
+                                value={position.entryDate}
+                                onChange={(e) => updatePosition(position.symbol, 'entryDate', e.target.value)}
+                                className="w-full px-2 py-1 text-sm border rounded"
+                                style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }}
+                              />
+                            </div>
+                            <div>
+                              <label className="block mb-1 text-xs" style={{ color: 'var(--text-secondary)' }}>Allocation %:</label>
+                              <NumberInput
+                                value={position.allocationPercentage}
+                                onChange={(value) => updatePosition(position.symbol, 'allocationPercentage', value)}
+                                min={0}
+                                max={100}
+                                step={0.5}
+                                suffix="%"
+                                className="w-full h-[32px]"
+                              />
+                            </div>
                           </div>
                         </div>
                       ) : (
@@ -645,33 +667,36 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Available Cash:</span>
-                  <input 
-                    type="number" 
+                  <NumberInput 
                     value={portfolioSettings.availableCash} 
-                    onChange={(e) => setPortfolioSettings({...portfolioSettings, availableCash: parseInt(e.target.value) || 0})}
-                    className="w-24 px-2 py-1 text-sm border rounded" 
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                    onChange={(value) => setPortfolioSettings({...portfolioSettings, availableCash: Math.round(value)})}
+                    min={0}
+                    step={1000}
+                    prefix="$"
+                    className="w-24"
                   />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Max Positions:</span>
-                  <input 
-                    type="number" 
+                  <NumberInput 
                     value={portfolioSettings.maxPositions} 
-                    onChange={(e) => setPortfolioSettings({...portfolioSettings, maxPositions: parseInt(e.target.value) || 0})}
-                    className="w-16 px-2 py-1 text-sm border rounded" 
-                    style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                    onChange={(value) => setPortfolioSettings({...portfolioSettings, maxPositions: Math.round(value)})}
+                    min={1}
+                    max={50}
+                    step={1}
+                    className="w-16"
                   />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Default Position Size:</span>
                   <div className="flex items-center space-x-1">
-                    <input 
-                      type="number" 
+                    <NumberInput 
                       value={portfolioSettings.positionSizeLimit} 
-                      onChange={(e) => setPortfolioSettings({...portfolioSettings, positionSizeLimit: parseInt(e.target.value) || 0})}
-                      className="w-16 px-2 py-1 text-sm border rounded" 
-                      style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                      onChange={(value) => setPortfolioSettings({...portfolioSettings, positionSizeLimit: Math.round(value)})}
+                      min={1}
+                      max={100}
+                      step={1}
+                      className="w-16"
                     />
                     <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>% of portfolio</span>
                   </div>
@@ -1045,12 +1070,11 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
             </div>
 
             {/* Trend Indicators */}
-            <AccordionSection
-              title="Trend Indicators"
-              icon={<TrendingUp size={16} />}
-              isExpanded={accordionState.trendIndicators}
-              onToggle={() => toggleAccordion('trendIndicators')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <TrendingUp size={16} />
+                <span>Trend Indicators</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1102,27 +1126,25 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Deviation:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.vwapDeviation} 
-                        onChange={(e) => setIndicators({...indicators, vwapDeviation: parseFloat(e.target.value) || 0})}
-                        step="0.1" 
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, vwapDeviation: value})}
+                        min={0}
+                        step={0.1}
+                        className="w-12"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
 
             {/* Volume Indicators */}
-            <AccordionSection
-              title="Volume Indicators"
-              icon={<LineChart size={16} />}
-              isExpanded={accordionState.volumeIndicators}
-              onToggle={() => toggleAccordion('volumeIndicators')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <LineChart size={16} />
+                <span>Volume Indicators</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1138,12 +1160,13 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>POC Levels:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.pocLevels} 
-                        onChange={(e) => setIndicators({...indicators, pocLevels: parseInt(e.target.value) || 0})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, pocLevels: Math.round(value)})}
+                        min={1}
+                        max={20}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
@@ -1173,13 +1196,12 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="flex justify-between text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Threshold:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.cvdThreshold} 
-                        onChange={(e) => setIndicators({...indicators, cvdThreshold: parseFloat(e.target.value) || 0})}
-                        step="0.1" 
-                        className="w-16 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, cvdThreshold: value})}
+                        min={0}
+                        step={0.1}
+                        className="w-16"
                       />
                     </div>
                   </div>
@@ -1198,15 +1220,14 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
 
             {/* Volatility Indicators */}
-            <AccordionSection
-              title="Volatility Indicators"
-              icon={<AlertTriangle size={16} />}
-              isExpanded={accordionState.volatilityIndicators}
-              onToggle={() => toggleAccordion('volatilityIndicators')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <AlertTriangle size={16} />
+                <span>Volatility Indicators</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1219,23 +1240,24 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.atrPeriod} 
-                        onChange={(e) => setIndicators({...indicators, atrPeriod: parseInt(e.target.value) || 14})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, atrPeriod: Math.round(value)})}
+                        min={1}
+                        max={100}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Multiplier:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.atrMultiplier} 
-                        onChange={(e) => setIndicators({...indicators, atrMultiplier: parseFloat(e.target.value) || 2.0})}
-                        step="0.1" 
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, atrMultiplier: value})}
+                        min={0.1}
+                        max={10}
+                        step={0.1}
+                        className="w-12"
                       />
                     </div>
                   </div>
@@ -1252,37 +1274,37 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.bollingerPeriod}
-                        onChange={(e) => setIndicators({...indicators, bollingerPeriod: parseInt(e.target.value) || 20})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, bollingerPeriod: Math.round(value)})}
+                        min={2}
+                        max={100}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Std Dev:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.bollingerStdDev}
-                        onChange={(e) => setIndicators({...indicators, bollingerStdDev: parseFloat(e.target.value) || 2})}
-                        step="0.1" 
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, bollingerStdDev: value})}
+                        min={0.1}
+                        max={5}
+                        step={0.1}
+                        className="w-12"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
 
             {/* Momentum Indicators */}
-            <AccordionSection
-              title="Momentum Indicators"
-              icon={<Target size={16} />}
-              isExpanded={accordionState.momentumIndicators}
-              onToggle={() => toggleAccordion('momentumIndicators')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <Target size={16} />
+                <span>Momentum Indicators</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1295,32 +1317,35 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Period:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.rsiPeriod} 
-                        onChange={(e) => setIndicators({...indicators, rsiPeriod: parseInt(e.target.value) || 14})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, rsiPeriod: Math.round(value)})}
+                        min={2}
+                        max={100}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Overbought:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.rsiOverbought} 
-                        onChange={(e) => setIndicators({...indicators, rsiOverbought: parseInt(e.target.value) || 70})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, rsiOverbought: Math.round(value)})}
+                        min={50}
+                        max={100}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Oversold:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.rsiOversold} 
-                        onChange={(e) => setIndicators({...indicators, rsiOversold: parseInt(e.target.value) || 30})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, rsiOversold: Math.round(value)})}
+                        min={0}
+                        max={50}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                   </div>
@@ -1337,38 +1362,41 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Fast:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.macdFast}
-                        onChange={(e) => setIndicators({...indicators, macdFast: parseInt(e.target.value) || 12})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, macdFast: Math.round(value)})}
+                        min={1}
+                        max={50}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Slow:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.macdSlow}
-                        onChange={(e) => setIndicators({...indicators, macdSlow: parseInt(e.target.value) || 26})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, macdSlow: Math.round(value)})}
+                        min={1}
+                        max={100}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                     <div className="flex justify-between">
                       <span style={{ color: 'var(--text-secondary)' }}>Signal:</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={indicators.macdSignal}
-                        onChange={(e) => setIndicators({...indicators, macdSignal: parseInt(e.target.value) || 9})}
-                        className="w-12 px-1 text-xs border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }} 
+                        onChange={(value) => setIndicators({...indicators, macdSignal: Math.round(value)})}
+                        min={1}
+                        max={50}
+                        step={1}
+                        className="w-12"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
           </div>
         );
 
@@ -1486,12 +1514,11 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
             </div>
 
             {/* Return Metrics */}
-            <AccordionSection
-              title="Return Metrics"
-              icon={<TrendingUp size={16} />}
-              isExpanded={accordionState.returnMetrics}
-              onToggle={() => toggleAccordion('returnMetrics')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <TrendingUp size={16} />
+                <span>Return Metrics</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1539,15 +1566,14 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
 
             {/* Risk Metrics */}
-            <AccordionSection
-              title="Risk Analysis Metrics"
-              icon={<TrendingDown size={16} />}
-              isExpanded={accordionState.riskMetrics}
-              onToggle={() => toggleAccordion('riskMetrics')}
-            >
+            <div className="space-y-3">
+              <h4 className="flex items-center space-x-2 font-medium text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                <TrendingDown size={16} />
+                <span>Risk Analysis Metrics</span>
+              </h4>
               <div className="space-y-3">
                 <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                   <div className="flex items-center justify-between mb-2">
@@ -1580,7 +1606,7 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                   </div>
                 </div>
               </div>
-            </AccordionSection>
+            </div>
           </div>
         );
 
@@ -1732,12 +1758,13 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                     </div>
                     <div className="flex items-center space-x-1">
                       <span className="text-xs">$</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={backtestSettings.initialCapital} 
-                        onChange={(e) => setBacktestSettings({...backtestSettings, initialCapital: parseInt(e.target.value) || 100000})}
-                        className="w-20 px-2 py-1 text-sm border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                        onChange={(value) => setBacktestSettings({...backtestSettings, initialCapital: Math.round(value)})}
+                        min={1000}
+                        step={1000}
+                        prefix="$"
+                        className="w-20"
                       />
                     </div>
                   </div>
@@ -1750,13 +1777,13 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                     </div>
                     <div className="flex items-center space-x-1">
                       <span className="text-xs">$</span>
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={backtestSettings.commission} 
-                        onChange={(e) => setBacktestSettings({...backtestSettings, commission: parseFloat(e.target.value) || 5.00})}
-                        step="0.01" 
-                        className="w-16 px-2 py-1 text-sm border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                        onChange={(value) => setBacktestSettings({...backtestSettings, commission: value})}
+                        min={0}
+                        step={0.01}
+                        prefix="$"
+                        className="w-16" 
                       />
                     </div>
                   </div>
@@ -1768,13 +1795,14 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                       <InfoTooltip text="Price difference between expected and actual execution. Accounts for market impact and bid-ask spread. Higher for illiquid stocks." />
                     </div>
                     <div className="flex items-center space-x-1">
-                      <input 
-                        type="number" 
+                      <NumberInput 
                         value={backtestSettings.slippage} 
-                        onChange={(e) => setBacktestSettings({...backtestSettings, slippage: parseFloat(e.target.value) || 0.05})}
-                        step="0.01" 
-                        className="w-16 px-2 py-1 text-sm border rounded" 
-                        style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text-primary)' }} 
+                        onChange={(value) => setBacktestSettings({...backtestSettings, slippage: value})}
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        suffix="%"
+                        className="w-16" 
                       />
                       <span className="text-xs">%</span>
                     </div>
