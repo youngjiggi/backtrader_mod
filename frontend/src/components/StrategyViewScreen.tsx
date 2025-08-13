@@ -10,8 +10,8 @@ interface StrategyViewScreenProps {
 
 const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ strategy, onBack }) => {
   const renderChartContent = () => (
-    <div className="flex flex-col h-full">
-      <AccountBalanceChart strategy={strategy} />
+    <div className="flex flex-col flex-1">
+      <AccountBalanceChart strategy={strategy} className="flex-1" />
     </div>
   );
 

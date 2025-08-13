@@ -143,7 +143,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
         <div className="flex flex-1">
           <div className="flex-1 flex flex-col">
             {/* Chart Content */}
-            <div className="flex-1 p-4">
+            <div className="flex-1 p-4 flex flex-col">
               {children}
             </div>
           </div>

@@ -16,6 +16,21 @@ export interface StrategyTemplate {
   tags: string[];
   createdAt: string;
   updatedAt: string;
+  // Performance metrics
+  performance?: {
+    totalReturn: number;
+    winRate: number;
+    sharpe: number;
+    maxDrawdown: number;
+    totalTrades: number;
+    avgHoldTime: string;
+    profitFactor: number;
+    trend: 'up' | 'down' | 'stable';
+    healthScore: number; // 0-100 scale
+    lastBacktestDate?: string;
+  };
+  status?: 'active' | 'draft' | 'archived' | 'paused';
+  isFavorite?: boolean;
 }
 
 interface StrategyContextType {
@@ -58,7 +73,21 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       phaseId: false,
       tags: ['breakout', 'atr', 'classic', 'momentum'],
       createdAt: '2025-01-20T10:00:00Z',
-      updatedAt: '2025-01-20T10:00:00Z'
+      updatedAt: '2025-01-20T10:00:00Z',
+      performance: {
+        totalReturn: 24.7,
+        winRate: 68.4,
+        sharpe: 1.84,
+        maxDrawdown: -8.2,
+        totalTrades: 127,
+        avgHoldTime: '3.2d',
+        profitFactor: 1.45,
+        trend: 'up',
+        healthScore: 85,
+        lastBacktestDate: '2025-01-20T10:00:00Z'
+      },
+      status: 'active',
+      isFavorite: true
     },
     {
       id: 'strategy_2',
@@ -75,7 +104,21 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       phaseId: false,
       tags: ['conservative', 'volume', 'cvd', 'low-risk'],
       createdAt: '2025-01-18T14:30:00Z',
-      updatedAt: '2025-01-18T14:30:00Z'
+      updatedAt: '2025-01-18T14:30:00Z',
+      performance: {
+        totalReturn: 16.2,
+        winRate: 74.8,
+        sharpe: 2.12,
+        maxDrawdown: -5.1,
+        totalTrades: 89,
+        avgHoldTime: '2.8d',
+        profitFactor: 1.68,
+        trend: 'stable',
+        healthScore: 92,
+        lastBacktestDate: '2025-01-18T14:30:00Z'
+      },
+      status: 'active',
+      isFavorite: false
     },
     {
       id: 'strategy_3',
@@ -92,7 +135,21 @@ export const StrategyProvider: React.FC<StrategyProviderProps> = ({ children }) 
       phaseId: true,
       tags: ['advanced', 'reversal', 'phase-id', 'scalping'],
       createdAt: '2025-01-15T09:15:00Z',
-      updatedAt: '2025-01-22T16:45:00Z'
+      updatedAt: '2025-01-22T16:45:00Z',
+      performance: {
+        totalReturn: 8.4,
+        winRate: 52.6,
+        sharpe: 0.96,
+        maxDrawdown: -12.3,
+        totalTrades: 234,
+        avgHoldTime: '1.2d',
+        profitFactor: 1.18,
+        trend: 'down',
+        healthScore: 43,
+        lastBacktestDate: '2025-01-22T16:45:00Z'
+      },
+      status: 'paused',
+      isFavorite: false
     }
   ]);
 

@@ -1,19 +1,86 @@
 import React from 'react';
-import { ArrowLeft, Settings } from 'lucide-react';
-import { useFontSize } from '../contexts/FontSizeContext';
+import { ArrowLeft, Settings, User, TrendingUp, Bell, Database, Palette, Monitor } from 'lucide-react';
 
 interface SettingsScreenProps {
   onBack: () => void;
+  onAccountSettingsClick?: () => void;
+  onTradingPreferencesClick?: () => void;
+  onProfileClick?: () => void;
+  onNotificationSettingsClick?: () => void;
+  onDataSettingsClick?: () => void;
+  onDisplaySettingsClick?: () => void;
 }
 
-const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
-  const { fontSize, setFontSize } = useFontSize();
+const SettingsScreen: React.FC<SettingsScreenProps> = ({ 
+  onBack, 
+  onAccountSettingsClick,
+  onTradingPreferencesClick,
+  onProfileClick,
+  onNotificationSettingsClick,
+  onDataSettingsClick,
+  onDisplaySettingsClick
+}) => {
 
-  const fontSizeOptions = [
-    { value: 'small', label: 'Small', description: 'Compact text for more information' },
-    { value: 'medium', label: 'Medium', description: 'Standard text size' },
-    { value: 'large', label: 'Large', description: 'Larger text for better readability' }
-  ] as const;
+  // Settings categories
+  const settingsCategories = [
+    {
+      title: 'Account & Profile',
+      description: 'Manage your personal information and account settings',
+      icon: <User size={20} />,
+      items: [
+        {
+          title: 'Profile',
+          description: 'View and edit your profile information',
+          icon: <User size={16} />,
+          onClick: onProfileClick
+        },
+        {
+          title: 'Account Settings',
+          description: 'Manage personal info, password, and security',
+          icon: <Settings size={16} />,
+          onClick: onAccountSettingsClick
+        }
+      ]
+    },
+    {
+      title: 'Trading & Preferences',
+      description: 'Configure your trading and backtesting preferences',
+      icon: <TrendingUp size={20} />,
+      items: [
+        {
+          title: 'Trading Preferences',
+          description: 'Set default portfolio parameters and chart settings',
+          icon: <TrendingUp size={16} />,
+          onClick: onTradingPreferencesClick
+        },
+        {
+          title: 'Notification Settings',
+          description: 'Manage email and system notifications',
+          icon: <Bell size={16} />,
+          onClick: onNotificationSettingsClick
+        }
+      ]
+    },
+    {
+      title: 'Application',
+      description: 'Customize your application experience',
+      icon: <Monitor size={20} />,
+      items: [
+        {
+          title: 'Display Settings',
+          description: 'Font size, theme, and visual preferences',
+          icon: <Palette size={16} />,
+          onClick: onDisplaySettingsClick
+        },
+        {
+          title: 'Data Management',
+          description: 'Export, backup, and data preferences',
+          icon: <Database size={16} />,
+          onClick: onDataSettingsClick
+        }
+      ]
+    }
+  ];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
@@ -48,110 +115,59 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Settings Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="space-y-8">
-          {/* Display Settings */}
-          <div
-            className="border rounded-lg p-6"
-            style={{
-              backgroundColor: 'var(--surface)',
-              borderColor: 'var(--border)'
-            }}
-          >
-            <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>
-              Display Settings
-            </h2>
-            
-            {/* Font Size Setting */}
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
-                  Font Size
-                </h3>
-                <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                  Choose your preferred text size for better readability
-                </p>
-              </div>
-              
-              <div className="space-y-3">
-                {fontSizeOptions.map((option) => (
-                  <label
-                    key={option.value}
-                    className="flex items-start space-x-3 cursor-pointer p-3 rounded-lg border transition-colors hover:bg-opacity-80"
-                    style={{
-                      backgroundColor: fontSize === option.value ? 'var(--accent)' : 'var(--bg-primary)',
-                      borderColor: fontSize === option.value ? 'var(--accent)' : 'var(--border)',
-                      color: fontSize === option.value ? 'var(--bg-primary)' : 'var(--text-primary)'
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="fontSize"
-                      value={option.value}
-                      checked={fontSize === option.value}
-                      onChange={(e) => setFontSize(e.target.value as typeof fontSize)}
-                      className="mt-1"
-                      style={{ accentColor: 'var(--accent)' }}
-                    />
-                    <div className="flex-1">
-                      <div className="font-medium">{option.label}</div>
-                      <div 
-                        className="text-sm"
-                        style={{ 
-                          color: fontSize === option.value ? 'var(--bg-primary)' : 'var(--text-secondary)',
-                          opacity: fontSize === option.value ? 0.9 : 1
-                        }}
-                      >
-                        {option.description}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Preview Section */}
-          <div
-            className="border rounded-lg p-6"
-            style={{
-              backgroundColor: 'var(--surface)',
-              borderColor: 'var(--border)'
-            }}
-          >
-            <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
-              Preview
-            </h2>
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        {/* Settings Navigation */}
+        <div className="space-y-6">
+  {settingsCategories.map((category, categoryIndex) => (
             <div
-              className="border rounded p-4"
+              key={categoryIndex}
+              className="border rounded-lg p-6"
               style={{
-                backgroundColor: 'var(--bg-primary)',
+                backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)'
               }}
             >
-              <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                Sample Backtest Report
-              </h3>
-              <p className="mb-3" style={{ color: 'var(--text-secondary)' }}>
-                AAPL • 1D • 2024-01-01 to 2024-12-31
-              </p>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-secondary)' }}>Total Return</span>
-                  <span className="font-medium" style={{ color: '#10b981' }}>+15.2%</span>
+              <div className="flex items-center space-x-3 mb-4">
+                <div style={{ color: 'var(--accent)' }}>
+                  {category.icon}
                 </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-secondary)' }}>Win Rate</span>
-                  <span className="font-medium" style={{ color: 'var(--highlight)' }}>68.4%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span style={{ color: 'var(--text-secondary)' }}>Sharpe Ratio</span>
-                  <span className="font-medium" style={{ color: 'var(--highlight)' }}>1.23</span>
+                <div>
+                  <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {category.title}
+                  </h2>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {category.description}
+                  </p>
                 </div>
               </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {category.items.map((item, itemIndex) => (
+                  <button
+                    key={itemIndex}
+                    onClick={item.onClick}
+                    className="p-4 rounded-lg border text-left transition-colors hover:bg-opacity-50 hover:border-opacity-80"
+                    style={{
+                      backgroundColor: 'var(--bg-primary)',
+                      borderColor: 'var(--border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div style={{ color: 'var(--accent)' }}>
+                        {item.icon}
+                      </div>
+                      <h3 className="font-medium">{item.title}</h3>
+                    </div>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {item.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
     </div>

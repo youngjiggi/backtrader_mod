@@ -3,6 +3,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { FontSizeProvider } from './contexts/FontSizeContext';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
+import { UserProvider } from './contexts/UserContext';
 import { RecentRun } from './components/RecentRunsCarousel';
 import Dashboard from './components/Dashboard';
 import TabbedLibrary from './components/TabbedLibrary';
@@ -13,8 +14,14 @@ import StrategyViewScreen from './components/StrategyViewScreen';
 import SignInScreen from './components/SignInScreen';
 import WatchlistManagement from './components/WatchlistManagement';
 import SettingsScreen from './components/SettingsScreen';
+import UserProfileScreen from './components/UserProfileScreen';
+import AccountSettingsScreen from './components/AccountSettingsScreen';
+import TradingPreferencesScreen from './components/TradingPreferencesScreen';
+import NotificationSettingsScreen from './components/NotificationSettingsScreen';
+import DataSettingsScreen from './components/DataSettingsScreen';
+import DisplaySettingsScreen from './components/DisplaySettingsScreen';
 
-type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'strategy-view' | 'signin' | 'watchlists' | 'settings';
+type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'strategy-view' | 'signin' | 'watchlists' | 'settings' | 'profile' | 'account-settings' | 'trading-preferences' | 'notification-settings' | 'data-settings' | 'display-settings';
 
 interface BacktestData {
   id: string;
@@ -143,12 +150,81 @@ function App() {
     setCurrentView('strategy-view');
   };
 
+  const handleNavigateToProfile = () => {
+    setCurrentView('profile');
+  };
+
+  const handleNavigateToAccountSettings = () => {
+    setCurrentView('account-settings');
+  };
+
+  const handleNavigateToTradingPreferences = () => {
+    setCurrentView('trading-preferences');
+  };
+
+  const handleNavigateToNotificationSettings = () => {
+    setCurrentView('notification-settings');
+  };
+
+  const handleNavigateToDataSettings = () => {
+    setCurrentView('data-settings');
+  };
+
+  const handleNavigateToDisplaySettings = () => {
+    setCurrentView('display-settings');
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'settings':
         return (
           <SettingsScreen 
             onBack={() => setCurrentView('dashboard')}
+            onAccountSettingsClick={handleNavigateToAccountSettings}
+            onTradingPreferencesClick={handleNavigateToTradingPreferences}
+            onProfileClick={handleNavigateToProfile}
+            onNotificationSettingsClick={handleNavigateToNotificationSettings}
+            onDataSettingsClick={handleNavigateToDataSettings}
+            onDisplaySettingsClick={handleNavigateToDisplaySettings}
+          />
+        );
+      case 'profile':
+        return (
+          <UserProfileScreen 
+            onBack={() => setCurrentView('dashboard')}
+            onAccountSettingsClick={handleNavigateToAccountSettings}
+            onTradingPreferencesClick={handleNavigateToTradingPreferences}
+            onSettingsClick={handleNavigateToSettings}
+          />
+        );
+      case 'account-settings':
+        return (
+          <AccountSettingsScreen 
+            onBack={() => setCurrentView('profile')}
+          />
+        );
+      case 'trading-preferences':
+        return (
+          <TradingPreferencesScreen 
+            onBack={() => setCurrentView('profile')}
+          />
+        );
+      case 'notification-settings':
+        return (
+          <NotificationSettingsScreen 
+            onBack={() => setCurrentView('settings')}
+          />
+        );
+      case 'data-settings':
+        return (
+          <DataSettingsScreen 
+            onBack={() => setCurrentView('settings')}
+          />
+        );
+      case 'display-settings':
+        return (
+          <DisplaySettingsScreen 
+            onBack={() => setCurrentView('settings')}
           />
         );
       case 'signin':
@@ -176,8 +252,44 @@ function App() {
           <StrategyLibrary 
             onBack={() => setCurrentView('dashboard')}
             onRunStrategy={(strategy, symbol) => {
-              console.log('Running strategy:', strategy.name, 'for', symbol);
-              setCurrentView('dashboard');
+              // Convert StrategyTemplate to RecentRun for navigation
+              const recentRun: RecentRun = {
+                id: `run-${Date.now()}`,
+                name: strategy.name,
+                version: 'v1.0',
+                symbol: symbol,
+                timeframe: strategy.timeframe,
+                startDate: '2024-01-01',
+                endDate: '2024-12-31',
+                totalReturn: 15.2,
+                winRate: 68.4,
+                sharpe: 1.84,
+                maxDrawdown: -8.2,
+                totalTrades: 127,
+                avgHoldTime: '3.2d',
+                profitFactor: 1.45,
+                calmarRatio: 0.92,
+                completedAt: new Date().toISOString(),
+                keynote: `Running ${strategy.name} on ${symbol}`,
+                strategySettings: {
+                  atrPeriod: strategy.atrPeriod,
+                  atrMultiplier: strategy.atrMultiplier,
+                  cvdThreshold: strategy.cvdThreshold,
+                  rsiPeriod: 14,
+                  rsiOversold: 30,
+                  rsiOverbought: 70,
+                  stopLoss: 2.0,
+                  takeProfit: 6.0,
+                  positionSize: 1000,
+                  maxPositions: 5
+                },
+                periodData: {
+                  '1D': { totalReturn: 15.2, winRate: 68.4, sharpe: 1.84, maxDrawdown: -8.2, totalTrades: 127, avgHoldTime: '3.2d', profitFactor: 1.45, calmarRatio: 0.92 },
+                  '1W': { totalReturn: 18.7, winRate: 72.1, sharpe: 2.02, maxDrawdown: -6.8, totalTrades: 89, avgHoldTime: '2.8d', profitFactor: 1.62, calmarRatio: 1.08 },
+                  '1M': { totalReturn: 24.3, winRate: 69.8, sharpe: 1.96, maxDrawdown: -9.1, totalTrades: 156, avgHoldTime: '4.1d', profitFactor: 1.58, calmarRatio: 0.95 }
+                }
+              };
+              handleNavigateToStrategyView(recentRun);
             }}
           />
         );
@@ -216,23 +328,26 @@ function App() {
             onNavigateToStrategyView={handleNavigateToStrategyView}
             onNavigateToSignIn={handleNavigateToSignIn}
             onNavigateToSettings={handleNavigateToSettings}
+            onNavigateToProfile={handleNavigateToProfile}
           />
         );
     }
   };
 
   return (
-    <ThemeProvider>
-      <FontSizeProvider>
-        <StrategyProvider>
-          <WatchlistProvider>
-            <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-              {renderCurrentView()}
-            </div>
-          </WatchlistProvider>
-        </StrategyProvider>
-      </FontSizeProvider>
-    </ThemeProvider>
+    <UserProvider>
+      <ThemeProvider>
+        <FontSizeProvider>
+          <StrategyProvider>
+            <WatchlistProvider>
+              <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                {renderCurrentView()}
+              </div>
+            </WatchlistProvider>
+          </StrategyProvider>
+        </FontSizeProvider>
+      </ThemeProvider>
+    </UserProvider>
   );
 }
 

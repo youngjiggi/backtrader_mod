@@ -66,6 +66,7 @@ interface DashboardProps {
   onNavigateToStrategyView?: (strategy: RecentRun) => void;
   onNavigateToSignIn?: () => void;
   onNavigateToSettings?: () => void;
+  onNavigateToProfile?: () => void;
 }
 
 interface RunningBacktest {
@@ -79,7 +80,7 @@ interface RunningBacktest {
   tags: string[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToStrategyView, onNavigateToSignIn, onNavigateToSettings }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToStrategyView, onNavigateToSignIn, onNavigateToSettings, onNavigateToProfile }) => {
   const [isNewBacktestModalOpen, setIsNewBacktestModalOpen] = useState(false);
   const [runningBacktests, setRunningBacktests] = useState<RunningBacktest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -459,7 +460,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Header onSignInClick={onNavigateToSignIn} onSettingsClick={onNavigateToSettings} />
+      <Header onSignInClick={onNavigateToSignIn} onSettingsClick={onNavigateToSettings} onProfileClick={onNavigateToProfile} />
       
       {/* Hero Section */}
       <section className="relative h-96 overflow-hidden">
