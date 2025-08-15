@@ -69,3 +69,6 @@ samples2/
 datas/*.py
 
 .idea/
+
+# MCP configuration with API keys
+mcp.json

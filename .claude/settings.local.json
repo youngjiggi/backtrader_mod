@@ -34,7 +34,14 @@
       "Bash(git rm:*)",
       "Bash(npm run lint)",
       "Bash(npx tsc:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "WebFetch(domain:www.task-master.dev)",
+      "WebSearch",
+      "Bash(claude mcp add-json:*)",
+      "Bash(claude mcp:*)",
+      "Bash(task-master init:*)",
+      "Bash(npx task-master-ai:*)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": []
   }
