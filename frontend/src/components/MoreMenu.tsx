@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
   Maximize2, 
   Eye, 
@@ -27,9 +27,10 @@ import { usePanelManager } from './PanelManager';
 interface MoreMenuProps {
   onClose: () => void;
   currentStrategy?: string;
+  onChartControlChange?: (control: string, value: any) => void;
 }
 
-const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Breakout" }) => {
+const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Breakout", onChartControlChange }) => {
   const menuRef = useRef<HTMLDivElement>(null);
   const { 
     layoutMode, 
@@ -41,6 +42,44 @@ const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Bre
     toggleRightPanel,
     toggleBottomPanel
   } = usePanelManager();
+
+  // Chart control state (can be managed via localStorage)
+  const [chartControls, setChartControls] = useState({
+    showBalance: true,
+    showEquity: true,
+    showDrawdown: true,
+    showVolume: false,
+    chartType: 'line', // 'line', 'candlestick', 'area'
+    timeframe: '1D',
+    showGrid: true,
+    zoomLevel: 1
+  });
+
+  // Load chart controls from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('chartControls');
+      if (saved) {
+        setChartControls(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.warn('Failed to load chart controls:', error);
+    }
+  }, []);
+
+  // Save chart controls to localStorage
+  const updateChartControl = (key: string, value: any) => {
+    const newControls = { ...chartControls, [key]: value };
+    setChartControls(newControls);
+    
+    try {
+      localStorage.setItem('chartControls', JSON.stringify(newControls));
+    } catch (error) {
+      console.warn('Failed to save chart controls:', error);
+    }
+    
+    onChartControlChange?.(key, value);
+  };
 
   // Handle click outside
   useEffect(() => {
@@ -115,8 +154,8 @@ const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Bre
           icon: <ZoomIn size={16} />,
           label: 'Zoom In',
           onClick: () => {
-            // TODO: Implement chart zoom
-            console.log('Zoom in');
+            const newZoom = Math.min(chartControls.zoomLevel + 0.5, 3);
+            updateChartControl('zoomLevel', newZoom);
             onClose();
           }
         },
@@ -124,8 +163,7 @@ const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Bre
           icon: <ZoomOut size={16} />,
           label: 'Reset Zoom',
           onClick: () => {
-            // TODO: Implement zoom reset
-            console.log('Reset zoom');
+            updateChartControl('zoomLevel', 1);
             onClose();
           }
         }
@@ -220,44 +258,48 @@ const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Bre
           icon: <TrendingUp size={16} />,
           label: 'Technical Indicators',
           onClick: () => {
-            // TODO: Implement indicators menu
-            console.log('Open indicators menu');
+            // Toggle common indicators (simplified implementation)
+            updateChartControl('showIndicators', !chartControls.showIndicators || false);
             onClose();
           }
         },
         {
           icon: <Clock size={16} />,
-          label: 'Timeframe Selection',
+          label: `Timeframe: ${chartControls.timeframe}`,
           onClick: () => {
-            // TODO: Implement timeframe menu
-            console.log('Open timeframe menu');
+            // Cycle through timeframes
+            const timeframes = ['1D', '1W', '1M', '3M', '1Y'];
+            const currentIndex = timeframes.indexOf(chartControls.timeframe);
+            const nextIndex = (currentIndex + 1) % timeframes.length;
+            updateChartControl('timeframe', timeframes[nextIndex]);
             onClose();
           }
         },
         {
           icon: <BarChart3 size={16} />,
-          label: 'Chart Type',
+          label: `Chart Type: ${chartControls.chartType}`,
           onClick: () => {
-            // TODO: Implement chart type menu
-            console.log('Open chart type menu');
+            // Cycle through chart types
+            const types = ['line', 'candlestick', 'area'];
+            const currentIndex = types.indexOf(chartControls.chartType);
+            const nextIndex = (currentIndex + 1) % types.length;
+            updateChartControl('chartType', types[nextIndex]);
             onClose();
           }
         },
         {
-          icon: <Volume2 size={16} />,
-          label: 'Volume Display',
+          icon: chartControls.showVolume ? <Eye size={16} /> : <EyeOff size={16} />,
+          label: `${chartControls.showVolume ? 'Hide' : 'Show'} Volume`,
           onClick: () => {
-            // TODO: Implement volume toggle
-            console.log('Toggle volume display');
+            updateChartControl('showVolume', !chartControls.showVolume);
             onClose();
           }
         },
         {
-          icon: <Grid size={16} />,
-          label: 'Grid & Axes',
+          icon: chartControls.showGrid ? <Eye size={16} /> : <EyeOff size={16} />,
+          label: `${chartControls.showGrid ? 'Hide' : 'Show'} Grid`,
           onClick: () => {
-            // TODO: Implement grid settings
-            console.log('Open grid settings');
+            updateChartControl('showGrid', !chartControls.showGrid);
             onClose();
           }
         }

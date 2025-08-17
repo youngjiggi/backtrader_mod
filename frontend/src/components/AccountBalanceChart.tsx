@@ -5,6 +5,8 @@ import { RecentRun } from './RecentRunsCarousel';
 interface AccountBalanceChartProps {
   strategy: RecentRun;
   className?: string;
+  showHeaders?: boolean; // Controls if headers and performance metrics are shown
+  compact?: boolean; // Controls layout density
 }
 
 interface ChartPoint {
@@ -15,7 +17,12 @@ interface ChartPoint {
   displayDate: string;
 }
 
-const AccountBalanceChart: React.FC<AccountBalanceChartProps> = ({ strategy, className = '' }) => {
+const AccountBalanceChart: React.FC<AccountBalanceChartProps> = ({ 
+  strategy, 
+  className = '',
+  showHeaders = true, // Default to true for backward compatibility
+  compact = false 
+}) => {
   const [showBalance, setShowBalance] = useState(true);
   const [showEquity, setShowEquity] = useState(true);
   const [showDrawdown, setShowDrawdown] = useState(true);
@@ -279,130 +286,134 @@ const AccountBalanceChart: React.FC<AccountBalanceChartProps> = ({ strategy, cla
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Header with Performance Summary */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-            Account Balance Progression
-          </h3>
+    <div className={`${compact ? 'space-y-2' : 'space-y-4'} ${className}`}>
+      {/* Header with Performance Summary - Only show if showHeaders is true */}
+      {showHeaders && (
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+              Account Balance Progression
+            </h3>
+            {performanceMetrics && (
+              <div className="flex items-center space-x-6 text-sm">
+                <div className="flex items-center space-x-2">
+                  <DollarSign size={14} style={{ color: 'var(--highlight)' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>Total Return:</span>
+                  <span className={`font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {formatPercentage(performanceMetrics.totalReturn)}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <TrendingDown size={14} style={{ color: 'var(--highlight)' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>Max Drawdown:</span>
+                  <span className="font-medium text-red-500">
+                    -{formatPercentage(performanceMetrics.maxDrawdownPercent)}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Activity size={14} style={{ color: 'var(--highlight)' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>Peak Balance:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                    {formatCurrency(performanceMetrics.peakBalance)}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Balance Summary Cards */}
           {performanceMetrics && (
-            <div className="flex items-center space-x-6 text-sm">
-              <div className="flex items-center space-x-2">
-                <DollarSign size={14} style={{ color: 'var(--highlight)' }} />
-                <span style={{ color: 'var(--text-secondary)' }}>Total Return:</span>
-                <span className={`font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {formatPercentage(performanceMetrics.totalReturn)}
-                </span>
+            <div className="flex space-x-4">
+              <div 
+                className="p-3 rounded-lg border text-center"
+                style={{ 
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}
+              >
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Starting</div>
+                <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {formatCurrency(performanceMetrics.startingBalance)}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <TrendingDown size={14} style={{ color: 'var(--highlight)' }} />
-                <span style={{ color: 'var(--text-secondary)' }}>Max Drawdown:</span>
-                <span className="font-medium text-red-500">
-                  -{formatPercentage(performanceMetrics.maxDrawdownPercent)}
-                </span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Activity size={14} style={{ color: 'var(--highlight)' }} />
-                <span style={{ color: 'var(--text-secondary)' }}>Peak Balance:</span>
-                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                  {formatCurrency(performanceMetrics.peakBalance)}
-                </span>
+              <div 
+                className="p-3 rounded-lg border text-center"
+                style={{ 
+                  backgroundColor: 'var(--surface)',
+                  borderColor: 'var(--border)'
+                }}
+              >
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Ending</div>
+                <div className={`font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatCurrency(performanceMetrics.endingBalance)}
+                </div>
               </div>
             </div>
           )}
         </div>
+      )}
 
-        {/* Balance Summary Cards */}
-        {performanceMetrics && (
-          <div className="flex space-x-4">
-            <div 
-              className="p-3 rounded-lg border text-center"
-              style={{ 
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)'
+      {/* Chart Controls - Only show if showHeaders is true */}
+      {showHeaders && (
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={() => setShowBalance(!showBalance)}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
+                showBalance ? 'ring-2' : ''
+              }`}
+              style={{
+                backgroundColor: showBalance ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface)',
+                borderColor: showBalance ? 'var(--accent)' : 'var(--border)',
+                color: showBalance ? 'var(--accent)' : 'var(--text-secondary)',
+                border: '1px solid',
+                ringColor: 'var(--accent)'
               }}
             >
-              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Starting</div>
-              <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                {formatCurrency(performanceMetrics.startingBalance)}
-              </div>
-            </div>
-            <div 
-              className="p-3 rounded-lg border text-center"
-              style={{ 
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)'
+              {showBalance ? <Eye size={14} /> : <EyeOff size={14} />}
+              <span>Balance</span>
+            </button>
+            
+            <button
+              onClick={() => setShowEquity(!showEquity)}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
+                showEquity ? 'ring-2' : ''
+              }`}
+              style={{
+                backgroundColor: showEquity ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface)',
+                borderColor: showEquity ? '#10B981' : 'var(--border)',
+                color: showEquity ? '#10B981' : 'var(--text-secondary)',
+                border: '1px solid',
+                ringColor: '#10B981'
               }}
             >
-              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Ending</div>
-              <div className={`font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                {formatCurrency(performanceMetrics.endingBalance)}
-              </div>
-            </div>
+              {showEquity ? <Eye size={14} /> : <EyeOff size={14} />}
+              <span>Equity</span>
+            </button>
+            
+            <button
+              onClick={() => setShowDrawdown(!showDrawdown)}
+              className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
+                showDrawdown ? 'ring-2' : ''
+              }`}
+              style={{
+                backgroundColor: showDrawdown ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)',
+                borderColor: showDrawdown ? '#EF4444' : 'var(--border)',
+                color: showDrawdown ? '#EF4444' : 'var(--text-secondary)',
+                border: '1px solid',
+                ringColor: '#EF4444'
+              }}
+            >
+              {showDrawdown ? <Eye size={14} /> : <EyeOff size={14} />}
+              <span>Drawdown</span>
+            </button>
           </div>
-        )}
-      </div>
 
-      {/* Chart Controls */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setShowBalance(!showBalance)}
-            className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
-              showBalance ? 'ring-2' : ''
-            }`}
-            style={{
-              backgroundColor: showBalance ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface)',
-              borderColor: showBalance ? 'var(--accent)' : 'var(--border)',
-              color: showBalance ? 'var(--accent)' : 'var(--text-secondary)',
-              border: '1px solid',
-              ringColor: 'var(--accent)'
-            }}
-          >
-            {showBalance ? <Eye size={14} /> : <EyeOff size={14} />}
-            <span>Balance</span>
-          </button>
-          
-          <button
-            onClick={() => setShowEquity(!showEquity)}
-            className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
-              showEquity ? 'ring-2' : ''
-            }`}
-            style={{
-              backgroundColor: showEquity ? 'rgba(16, 185, 129, 0.1)' : 'var(--surface)',
-              borderColor: showEquity ? '#10B981' : 'var(--border)',
-              color: showEquity ? '#10B981' : 'var(--text-secondary)',
-              border: '1px solid',
-              ringColor: '#10B981'
-            }}
-          >
-            {showEquity ? <Eye size={14} /> : <EyeOff size={14} />}
-            <span>Equity</span>
-          </button>
-          
-          <button
-            onClick={() => setShowDrawdown(!showDrawdown)}
-            className={`flex items-center space-x-2 px-3 py-1.5 text-sm rounded transition-colors ${
-              showDrawdown ? 'ring-2' : ''
-            }`}
-            style={{
-              backgroundColor: showDrawdown ? 'rgba(239, 68, 68, 0.1)' : 'var(--surface)',
-              borderColor: showDrawdown ? '#EF4444' : 'var(--border)',
-              color: showDrawdown ? '#EF4444' : 'var(--text-secondary)',
-              border: '1px solid',
-              ringColor: '#EF4444'
-            }}
-          >
-            {showDrawdown ? <Eye size={14} /> : <EyeOff size={14} />}
-            <span>Drawdown</span>
-          </button>
+          <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {chartData.length} data points • Hover for details
+          </div>
         </div>
-
-        <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-          {chartData.length} data points • Hover for details
-        </div>
-      </div>
+      )}
 
       {/* Chart */}
       {renderMockChart()}
@@ -424,6 +435,25 @@ const AccountBalanceChart: React.FC<AccountBalanceChartProps> = ({ strategy, cla
       </div>
     </div>
   );
+};
+
+// Export helper function to get performance metrics for other components
+export const getPerformanceMetrics = (strategy: RecentRun) => {
+  if (!strategy.accountData) return null;
+
+  const totalReturn = ((strategy.accountData.endingBalance - strategy.accountData.startingBalance) / strategy.accountData.startingBalance) * 100;
+  const maxDrawdownPercent = (strategy.accountData.maxDrawdown || 0) / strategy.accountData.startingBalance * 100;
+  const peakBalance = strategy.accountData.peakBalance;
+  const currentDrawdown = ((peakBalance - strategy.accountData.endingBalance) / peakBalance) * 100;
+
+  return {
+    totalReturn,
+    maxDrawdownPercent,
+    currentDrawdown,
+    startingBalance: strategy.accountData.startingBalance,
+    endingBalance: strategy.accountData.endingBalance,
+    peakBalance
+  };
 };
 
 export default AccountBalanceChart;

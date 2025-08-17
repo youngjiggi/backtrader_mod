@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Library, Layers, MoreVertical } from 'lucide-react';
+import { Menu, Library, Layers, MoreVertical, X } from 'lucide-react';
 import HamburgerMenu from './HamburgerMenu';
 import MoreMenu from './MoreMenu';
 
@@ -14,6 +14,7 @@ interface SingleNavigationBarProps {
   currentStrategy?: string;
   strategies?: StrategyTab[];
   onStrategySelect?: (strategyId: string) => void;
+  onStrategyClose?: (strategyId: string) => void;
   onLibraryClick?: () => void;
   onCompareClick?: () => void;
   className?: string;
@@ -28,6 +29,7 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
     { id: '3', name: 'Strategy 3', isActive: false }
   ],
   onStrategySelect,
+  onStrategyClose,
   onLibraryClick,
   onCompareClick,
   className = ''
@@ -77,18 +79,44 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
           {/* Strategy Tabs */}
           <div className="flex space-x-1">
             {strategies.map((strategy) => (
-              <button
+              <div
                 key={strategy.id}
-                onClick={() => onStrategySelect?.(strategy.id)}
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-opacity-80"
+                className="flex items-center rounded-lg border transition-colors hover:bg-opacity-80"
                 style={{
                   backgroundColor: strategy.isActive ? 'var(--accent)' : 'var(--bg-primary)',
-                  border: `1px solid ${strategy.isActive ? 'var(--accent)' : 'var(--border)'}`,
-                  color: strategy.isActive ? 'var(--bg-primary)' : 'var(--text-primary)'
+                  borderColor: strategy.isActive ? 'var(--accent)' : 'var(--border)'
                 }}
               >
-                {strategy.name}
-              </button>
+                {/* Strategy Tab Button */}
+                <button
+                  onClick={() => onStrategySelect?.(strategy.id)}
+                  className="px-3 py-2 text-sm font-medium transition-colors rounded-l-lg"
+                  style={{
+                    color: strategy.isActive ? 'var(--bg-primary)' : 'var(--text-primary)',
+                    backgroundColor: 'transparent'
+                  }}
+                >
+                  {strategy.name}
+                </button>
+                
+                {/* Close Button - Only show if there are multiple strategies */}
+                {strategies.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onStrategyClose?.(strategy.id);
+                    }}
+                    className="px-2 py-2 text-sm transition-colors hover:bg-opacity-20 rounded-r-lg"
+                    style={{
+                      color: strategy.isActive ? 'var(--bg-primary)' : 'var(--text-secondary)',
+                      backgroundColor: 'transparent'
+                    }}
+                    title={`Close ${strategy.name}`}
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         </div>

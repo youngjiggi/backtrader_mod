@@ -244,7 +244,9 @@ function App() {
         return selectedStrategyForView ? (
           <StrategyViewScreen 
             strategy={selectedStrategyForView}
-            onBack={() => setCurrentView('dashboard')} 
+            onBack={() => setCurrentView('dashboard')}
+            onLibraryClick={() => setCurrentView('library')}
+            onCompareClick={() => setCurrentView('comparison')}
           />
         ) : null;
       case 'strategies':

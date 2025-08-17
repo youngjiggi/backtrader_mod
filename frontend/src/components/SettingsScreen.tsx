@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowLeft, Settings, User, TrendingUp, Bell, Database, Palette, Monitor } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Settings, User, TrendingUp, Bell, Database, Palette, Monitor, ChevronDown, ChevronRight } from 'lucide-react';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -20,6 +20,54 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
   onDataSettingsClick,
   onDisplaySettingsClick
 }) => {
+  // Accordion state management
+  const [expandedSection, setExpandedSection] = useState<number>(0); // Default to first section expanded
+  const [accordionStates, setAccordionStates] = useState<boolean[]>([true, false, false]); // Track which sections are expanded
+
+  // Load accordion state from localStorage
+  useEffect(() => {
+    try {
+      const savedStates = localStorage.getItem('settingsAccordionStates');
+      const savedExpanded = localStorage.getItem('settingsExpandedSection');
+      
+      if (savedStates) {
+        setAccordionStates(JSON.parse(savedStates));
+      }
+      if (savedExpanded) {
+        setExpandedSection(parseInt(savedExpanded, 10));
+      }
+    } catch (error) {
+      console.warn('Failed to load accordion state from localStorage:', error);
+    }
+  }, []);
+
+  // Save accordion state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('settingsAccordionStates', JSON.stringify(accordionStates));
+      localStorage.setItem('settingsExpandedSection', expandedSection.toString());
+    } catch (error) {
+      console.warn('Failed to save accordion state to localStorage:', error);
+    }
+  }, [accordionStates, expandedSection]);
+
+  const toggleSection = (index: number) => {
+    const newStates = [...accordionStates];
+    
+    // For Tesla optimization: only one section open at a time
+    if (window.innerWidth <= 1200) { // Tesla-like screen constraint
+      // Close all sections
+      newStates.fill(false);
+      // Open clicked section if it was closed
+      newStates[index] = !accordionStates[index];
+      setExpandedSection(accordionStates[index] ? -1 : index);
+    } else {
+      // Desktop: allow multiple sections open
+      newStates[index] = !accordionStates[index];
+    }
+    
+    setAccordionStates(newStates);
+  };
 
   // Settings categories
   const settingsCategories = [
@@ -117,54 +165,85 @@ const SettingsScreen: React.FC<SettingsScreenProps> = ({
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-6">
-        {/* Settings Navigation */}
-        <div className="space-y-6">
-  {settingsCategories.map((category, categoryIndex) => (
+        {/* Settings Navigation - Accordion Style */}
+        <div className="space-y-4">
+          {settingsCategories.map((category, categoryIndex) => (
             <div
               key={categoryIndex}
-              className="border rounded-lg p-6"
+              className="border rounded-lg overflow-hidden"
               style={{
                 backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)'
               }}
             >
-              <div className="flex items-center space-x-3 mb-4">
-                <div style={{ color: 'var(--accent)' }}>
-                  {category.icon}
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    {category.title}
-                  </h2>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {category.description}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {category.items.map((item, itemIndex) => (
-                  <button
-                    key={itemIndex}
-                    onClick={item.onClick}
-                    className="p-4 rounded-lg border text-left transition-colors hover:bg-opacity-50 hover:border-opacity-80"
-                    style={{
-                      backgroundColor: 'var(--bg-primary)',
-                      borderColor: 'var(--border)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <div className="flex items-center space-x-3 mb-2">
-                      <div style={{ color: 'var(--accent)' }}>
-                        {item.icon}
-                      </div>
-                      <h3 className="font-medium">{item.title}</h3>
-                    </div>
+              {/* Accordion Header - Clickable */}
+              <button
+                onClick={() => toggleSection(categoryIndex)}
+                className="w-full flex items-center justify-between p-4 text-left transition-colors hover:bg-opacity-80"
+                style={{
+                  backgroundColor: accordionStates[categoryIndex] ? 'var(--bg-primary)' : 'transparent'
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div style={{ color: 'var(--accent)' }}>
+                    {category.icon}
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      {category.title}
+                    </h2>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {item.description}
+                      {category.description}
                     </p>
-                  </button>
-                ))}
+                  </div>
+                </div>
+                
+                {/* Chevron Icon */}
+                <div 
+                  className="transition-transform duration-200"
+                  style={{ 
+                    transform: accordionStates[categoryIndex] ? 'rotate(0deg)' : 'rotate(-90deg)',
+                    color: 'var(--text-secondary)'
+                  }}
+                >
+                  <ChevronDown size={20} />
+                </div>
+              </button>
+              
+              {/* Accordion Content - Collapsible */}
+              <div 
+                className="transition-all duration-300 ease-in-out overflow-hidden"
+                style={{
+                  maxHeight: accordionStates[categoryIndex] ? '400px' : '0px',
+                  opacity: accordionStates[categoryIndex] ? 1 : 0
+                }}
+              >
+                <div className="p-4 pt-0">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {category.items.map((item, itemIndex) => (
+                      <button
+                        key={itemIndex}
+                        onClick={item.onClick}
+                        className="p-4 rounded-lg border text-left transition-colors hover:bg-opacity-50 hover:border-opacity-80"
+                        style={{
+                          backgroundColor: 'var(--bg-primary)',
+                          borderColor: 'var(--border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      >
+                        <div className="flex items-center space-x-3 mb-2">
+                          <div style={{ color: 'var(--accent)' }}>
+                            {item.icon}
+                          </div>
+                          <h3 className="font-medium">{item.title}</h3>
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                          {item.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))}

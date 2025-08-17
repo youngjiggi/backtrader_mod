@@ -1,7 +1,8 @@
 import React from 'react';
-import { PieChart, Activity, TrendingUp, Target } from 'lucide-react';
+import { PieChart, Activity, TrendingUp, Target, DollarSign, TrendingDown } from 'lucide-react';
 import ResizablePanel from './ResizablePanel';
 import { usePanelManager, DashboardSettings } from './PanelManager';
+import { getPerformanceMetrics } from './AccountBalanceChart';
 
 interface AnalyticsPanelProps {
   strategy?: any; // Replace with proper strategy type
@@ -22,8 +23,82 @@ export const AnalyticsContent: React.FC<{
   sataScore = 8.2,
   activeTimeframe = '1D',
   settings
-}) => (
+}) => {
+  // Get performance metrics when chart headers are hidden
+  const performanceMetrics = strategy ? getPerformanceMetrics(strategy) : null;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
+  const formatPercentage = (value: number) => {
+    return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+  };
+
+  return (
     <>
+      {/* Performance Summary - Only show when available */}
+      {performanceMetrics && (!settings || settings.performanceSummary) && (
+        <div className="mb-6">
+          <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Performance Summary</h3>
+          <div className="space-y-3">
+            {/* Key Performance Metrics */}
+            <div className="grid grid-cols-1 gap-3">
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <DollarSign size={14} style={{ color: 'var(--highlight)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Total Return</span>
+                </div>
+                <div className={`font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatPercentage(performanceMetrics.totalReturn)}
+                </div>
+              </div>
+              
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <TrendingDown size={14} style={{ color: 'var(--highlight)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Max Drawdown</span>
+                </div>
+                <div className="font-medium text-red-500">
+                  -{formatPercentage(performanceMetrics.maxDrawdownPercent)}
+                </div>
+              </div>
+              
+              <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
+                <div className="flex items-center space-x-2 mb-1">
+                  <Activity size={14} style={{ color: 'var(--highlight)' }} />
+                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Peak Balance</span>
+                </div>
+                <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {formatCurrency(performanceMetrics.peakBalance)}
+                </div>
+              </div>
+            </div>
+
+            {/* Balance Summary */}
+            <div className="grid grid-cols-2 gap-2">
+              <div className="p-2 rounded border text-center" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Starting</div>
+                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  {formatCurrency(performanceMetrics.startingBalance)}
+                </div>
+              </div>
+              <div className="p-2 rounded border text-center" style={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)' }}>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>Ending</div>
+                <div className={`text-sm font-medium ${performanceMetrics.totalReturn >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {formatCurrency(performanceMetrics.endingBalance)}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Strategy Improvement Metrics - Moved to top */}
       {(!settings || settings.strategyEvolution) && (
         <div className="mb-6">
