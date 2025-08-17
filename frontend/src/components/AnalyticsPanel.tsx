@@ -346,7 +346,8 @@ export const AnalyticsContent: React.FC<{
         </div>
       )}
     </>
-);
+  );
+};
 
 const AnalyticsPanel: React.FC<AnalyticsPanelProps> = ({
   strategy,
