@@ -4,6 +4,7 @@ import Library from './Library';
 import StrategyViewScreen from './StrategyViewScreen';
 import MultiStrategyViewScreen from './MultiStrategyViewScreen';
 import ComparisonViewContainer from './ComparisonViewContainer';
+import SingleNavigationBar from './SingleNavigationBar';
 import { RecentRun } from './RecentRunsCarousel';
 import { generateMockStageData } from '../utils/mockStageData';
 
@@ -54,7 +55,6 @@ interface Tab {
   type: 'library' | 'strategy';
   title: string;
   data?: RecentRun;
-  component?: React.ReactNode;
 }
 
 interface TabbedLibraryProps {
@@ -306,11 +306,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
         id: `strategy-${strategy.id}`,
         type: 'strategy',
         title: `${strategy.name} ${strategy.version}`,
-        data: strategy,
-        component: <StrategyViewScreen 
-          strategy={strategy}
-          onBack={() => setActiveTabId('library')}
-        />
+        data: strategy
       };
 
       setTabs(prev => {
@@ -341,11 +337,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
           id: `strategy-${strategy.id}`,
           type: 'strategy',
           title: `${strategy.name} ${strategy.version}`,
-          data: strategy,
-          component: <StrategyViewScreen 
-            strategy={strategy}
-            onBack={() => setActiveTabId('library')}
-          />
+          data: strategy
         };
         newTabs.push(newTab);
       }
@@ -460,7 +452,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      {/* Header with Tabs */}
+      {/* Single Minimal Header */}
       <div
         className="border-b"
         style={{
@@ -468,153 +460,21 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
           borderColor: 'var(--border)'
         }}
       >
-        <div className="flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={onBack}
-              className="flex items-center space-x-2 px-3 py-2 rounded-lg border transition-colors hover:bg-opacity-80"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)'
-              }}
-              title="Back to Dashboard"
-            >
-              <ArrowLeft size={20} />
-              <span className="text-sm font-medium">Back to Main</span>
-            </button>
-            <h1 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              {activeTab?.type === 'library' ? 'Backtest Library' : 'Strategy Analysis'}
-            </h1>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            {/* Comparison View Toggle */}
-            {tabs.some(tab => tab.type === 'strategy') && (
-              <button
-                onClick={handleToggleComparisonView}
-                className={`px-3 py-1.5 text-sm border rounded transition-colors ${
-                  useComparisonView ? 'ring-2' : 'hover:bg-opacity-50'
-                }`}
-                style={{
-                  borderColor: useComparisonView ? 'var(--accent)' : 'var(--border)',
-                  color: useComparisonView ? 'var(--accent)' : 'var(--text-primary)',
-                  backgroundColor: useComparisonView ? 'rgba(59, 130, 246, 0.1)' : 'var(--surface)',
-                  ringColor: 'var(--accent)'
-                }}
-                title={useComparisonView ? 'Exit comparison view' : 'Switch to comparison view'}
-              >
-                <Layout size={16} style={{ marginRight: '4px' }} />
-                {useComparisonView ? 'Exit Compare' : 'Compare View'}
-              </button>
-            )}
-            
-            {/* Close All Tabs Button (when strategy tabs exist) */}
-            {tabs.some(tab => tab.type === 'strategy') && (
-              <button
-                onClick={handleCloseAllStrategyTabs}
-                className="px-3 py-1.5 text-sm border rounded transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                style={{
-                  borderColor: '#ef4444',
-                  color: '#ef4444',
-                  backgroundColor: 'var(--surface)'
-                }}
-              >
-                Close All Strategies
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tab Bar - Only show in normal tabbed view */}
-        {!useComparisonView && !useMultiStrategyView && tabs.length > 1 && (
-          <div className="px-6">
-            <div className="flex items-center space-x-1 overflow-hidden">
-              {/* Visible Tabs */}
-              {visibleTabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTabId(tab.id)}
-                  className={`flex items-center space-x-2 px-4 py-2 border-b-2 transition-all hover:bg-opacity-50 ${
-                    activeTabId === tab.id ? 'border-b-2' : 'border-transparent hover:border-gray-300'
-                  }`}
-                  style={{
-                    borderBottomColor: activeTabId === tab.id ? 'var(--accent)' : 'transparent',
-                    color: activeTabId === tab.id ? 'var(--accent)' : 'var(--text-secondary)',
-                    backgroundColor: activeTabId === tab.id ? 'var(--bg-primary)' : 'transparent'
-                  }}
-                >
-                  {tab.type === 'library' ? (
-                    <List size={16} />
-                  ) : (
-                    <div className="flex items-center space-x-2 max-w-32">
-                      <span className="truncate text-sm font-medium">
-                        {truncateTitle(tab.title)}
-                      </span>
-                      <button
-                        onClick={(e) => handleCloseTab(tab.id, e)}
-                        className="p-0.5 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  )}
-                  {tab.type === 'library' && <span className="text-sm font-medium">Library</span>}
-                </button>
-              ))}
-
-              {/* Overflow Menu */}
-              {overflowTabs.length > 0 && (
-                <div className="relative">
-                  <button
-                    onClick={() => setTabOverflowMenuOpen(!tabOverflowMenuOpen)}
-                    className="flex items-center space-x-1 px-3 py-2 text-sm border-b-2 border-transparent hover:border-gray-300 transition-colors"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    <MoreHorizontal size={16} />
-                    <span>+{overflowTabs.length}</span>
-                  </button>
-
-                  {tabOverflowMenuOpen && (
-                    <div
-                      className="absolute top-full right-0 mt-1 border rounded-lg shadow-lg z-10 min-w-48"
-                      style={{
-                        backgroundColor: 'var(--surface)',
-                        borderColor: 'var(--border)'
-                      }}
-                    >
-                      {overflowTabs.map((tab) => (
-                        <div
-                          key={tab.id}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-opacity-50 transition-colors"
-                        >
-                          <button
-                            onClick={() => {
-                              setActiveTabId(tab.id);
-                              setTabOverflowMenuOpen(false);
-                            }}
-                            className="flex-1 text-left text-sm truncate"
-                            style={{ color: 'var(--text-primary)' }}
-                          >
-                            {tab.title}
-                          </button>
-                          <button
-                            onClick={(e) => handleCloseTab(tab.id, e)}
-                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/20 transition-colors ml-2"
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Single Minimal Header for all views */}
+        <SingleNavigationBar
+          strategies={tabs.filter(tab => tab.type === 'strategy').map(tab => ({
+            id: tab.id,
+            name: tab.title,
+            isActive: tab.id === activeTabId
+          }))}
+          activeStrategyId={activeTabId}
+          onStrategySelect={(strategyId) => setActiveTabId(strategyId)}
+          onStrategyClose={(strategyId) => handleCloseTab(strategyId)}
+          onLibraryClick={() => setActiveTabId('library')}
+          onCompareClick={handleToggleComparisonView}
+          onBack={onBack}
+        />
       </div>
 
       {/* Tab Content */}
@@ -648,8 +508,12 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
               <div className="max-w-7xl mx-auto h-full">
                 {libraryComponent}
               </div>
-            ) : activeTab?.component ? (
-              activeTab.component
+            ) : activeTab?.type === 'strategy' && activeTab.data ? (
+              <StrategyViewScreen 
+                strategy={activeTab.data}
+                onBack={() => setActiveTabId('library')}
+                hideHeader={true}
+              />
             ) : (
               <div className="flex items-center justify-center h-96">
                 <div className="text-center">

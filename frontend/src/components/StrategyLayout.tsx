@@ -20,6 +20,7 @@ interface StrategyLayoutProps {
   // New navigation props
   onLibraryClick?: () => void;
   onCompareClick?: () => void;
+  onStrategyClose?: (strategyId: string) => void;
 }
 
 const StrategyLayoutHeader: React.FC<{
@@ -27,9 +28,10 @@ const StrategyLayoutHeader: React.FC<{
   onBack: () => void;
   onLibraryClick?: () => void;
   onCompareClick?: () => void;
+  onStrategyClose?: (strategyId: string) => void;
   strategy?: any;
   strategies?: any[];
-}> = ({ title, onBack, onLibraryClick, onCompareClick, strategy, strategies }) => {
+}> = ({ title, onBack, onLibraryClick, onCompareClick, onStrategyClose, strategy, strategies }) => {
   // Create strategy tabs from current strategy data
   const strategyTabs = strategies ? strategies.map((s, index) => ({
     id: s.id || `strategy-${index}`,
@@ -48,6 +50,7 @@ const StrategyLayoutHeader: React.FC<{
       strategies={strategyTabs}
       onLibraryClick={onLibraryClick}
       onCompareClick={onCompareClick}
+      onStrategyClose={onStrategyClose}
       className="flex-shrink-0"
     />
   );
@@ -73,6 +76,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
         renderTabContent={sidebarContent}
         activeTimeframe={activeTimeframe}
         sataScore={8.2} // TODO: Get from strategy data
+        hideHeader={true} // Hide the combined mode toggle in strategy views
       />
 
       {/* Right Side Content Area */}
@@ -117,7 +121,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
 };
 
 const StrategyLayout: React.FC<StrategyLayoutProps> = (props) => {
-  const { title, onBack, onLibraryClick, onCompareClick, strategy, strategies, ...contentProps } = props;
+  const { title, onBack, onLibraryClick, onCompareClick, onStrategyClose, strategy, strategies, ...contentProps } = props;
 
   return (
     <PanelManagerProvider>
@@ -127,6 +131,7 @@ const StrategyLayout: React.FC<StrategyLayoutProps> = (props) => {
           onBack={onBack} 
           onLibraryClick={onLibraryClick}
           onCompareClick={onCompareClick}
+          onStrategyClose={onStrategyClose}
           strategy={strategy}
           strategies={strategies}
         />

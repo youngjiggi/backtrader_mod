@@ -11,6 +11,7 @@ interface SidebarPanelProps {
   className?: string;
   activeTimeframe?: string;
   sataScore?: number;
+  hideHeader?: boolean; // Option to hide the combined mode toggle
 }
 
 const defaultTabs: TabItem[] = [
@@ -97,7 +98,8 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
   renderTabContent,
   className = '',
   activeTimeframe = '1D',
-  sataScore = 8.2
+  sataScore = 8.2,
+  hideHeader = false
 }) => {
   const { leftPanelWidth, leftPanelVisible, setLeftPanelWidth, layoutMode, dashboardSettings, updateDashboardSetting } = usePanelManager();
   const [combinedMode, setCombinedMode] = useState<'configuration' | 'dashboard'>('configuration');
@@ -2089,7 +2091,7 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
         className={`sidebar-panel ${className}`}
       >
       {/* Header: Combined mode toggle */}
-      {layoutMode === 'combined' && renderCombinedModeToggle()}
+      {layoutMode === 'combined' && !hideHeader && renderCombinedModeToggle()}
 
       {/* Content */}
       {renderContent()}

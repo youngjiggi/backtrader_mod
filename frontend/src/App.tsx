@@ -247,6 +247,11 @@ function App() {
             onBack={() => setCurrentView('dashboard')}
             onLibraryClick={() => setCurrentView('library')}
             onCompareClick={() => setCurrentView('comparison')}
+            onStrategyClose={(strategyId) => {
+              // Handle strategy close - for now just go back to dashboard
+              setSelectedStrategyForView(null);
+              setCurrentView('dashboard');
+            }}
           />
         ) : null;
       case 'strategies':
