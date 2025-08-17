@@ -15,7 +15,7 @@ import {
   Clock, 
   BarChart3, 
   Volume2, 
-  Grid3X3, 
+  Grid, 
   Share2, 
   Link,
   FileCode,
@@ -253,7 +253,7 @@ const MoreMenu: React.FC<MoreMenuProps> = ({ onClose, currentStrategy = "ATR Bre
           }
         },
         {
-          icon: <Grid3X3 size={16} />,
+          icon: <Grid size={16} />,
           label: 'Grid & Axes',
           onClick: () => {
             // TODO: Implement grid settings
