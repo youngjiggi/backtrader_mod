@@ -1,9 +1,10 @@
 import React from 'react';
-import { ArrowLeft, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, Columns, SquareStack } from 'lucide-react';
 import { PanelManagerProvider, usePanelManager } from './PanelManager';
 import SidebarPanel from './SidebarPanel';
 import AnalyticsPanel from './AnalyticsPanel';
 import BottomPanel from './BottomPanel';
+import SingleNavigationBar from './SingleNavigationBar';
+import ResizableChartContainer from './ResizableChartContainer';
 
 interface StrategyLayoutProps {
   title: string;
@@ -16,106 +17,43 @@ interface StrategyLayoutProps {
   sidebarContent?: (tabId: string, strategy?: any) => React.ReactNode;
   activeTimeframe?: string; // Current active timeframe
   className?: string;
+  // New navigation props
+  onLibraryClick?: () => void;
+  onCompareClick?: () => void;
 }
 
 const StrategyLayoutHeader: React.FC<{
   title: string;
   onBack: () => void;
-}> = ({ title, onBack }) => {
-  const { 
-    leftPanelVisible, 
-    rightPanelVisible, 
-    bottomPanelVisible,
-    layoutMode,
-    toggleLeftPanel,
-    toggleRightPanel,
-    toggleBottomPanel,
-    toggleLayoutMode
-  } = usePanelManager();
+  onLibraryClick?: () => void;
+  onCompareClick?: () => void;
+  strategy?: any;
+  strategies?: any[];
+}> = ({ title, onBack, onLibraryClick, onCompareClick, strategy, strategies }) => {
+  // Create strategy tabs from current strategy data
+  const strategyTabs = strategies ? strategies.map((s, index) => ({
+    id: s.id || `strategy-${index}`,
+    name: s.name || `Strategy ${index + 1}`,
+    isActive: s.id === strategy?.id || index === 0
+  })) : [{
+    id: strategy?.id || '1',
+    name: strategy?.name || title.replace('Strategy Analysis - ', ''),
+    isActive: true
+  }];
 
   return (
-    <div className="flex-shrink-0 flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)' }}>
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={onBack}
-          className="p-2 rounded-lg transition-colors"
-          style={{
-            backgroundColor: 'var(--surface)',
-            color: 'var(--text-primary)'
-          }}
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <span className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-          {title}
-        </span>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        {/* Panel Layout Toggle */}
-        <button
-          onClick={toggleLayoutMode}
-          className="flex items-center space-x-2 px-3 py-2 rounded transition-colors"
-          style={{
-            backgroundColor: layoutMode === 'combined' ? 'var(--accent)' : 'var(--surface)',
-            border: `1px solid var(--border)`,
-            color: layoutMode === 'combined' ? 'var(--bg-primary)' : 'var(--text-primary)'
-          }}
-          title={layoutMode === 'separate' ? 'Switch to Combined Panel Mode' : 'Switch to Separate Panels Mode'}
-        >
-          {layoutMode === 'separate' ? <Columns size={14} /> : <SquareStack size={14} />}
-          <span className="text-xs">
-            {layoutMode === 'separate' ? 'Separate' : 'Combined'}
-          </span>
-        </button>
-
-        {/* Panel Toggle Buttons */}
-        <button
-          onClick={toggleLeftPanel}
-          className="p-2 rounded transition-colors"
-          style={{
-            backgroundColor: leftPanelVisible ? 'var(--accent)' : 'var(--surface)',
-            border: `1px solid var(--border)`,
-            color: leftPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
-          }}
-          title={leftPanelVisible ? 'Hide Left Panel' : 'Show Left Panel'}
-        >
-          {leftPanelVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
-        </button>
-
-        {layoutMode === 'separate' && (
-          <button
-            onClick={toggleRightPanel}
-            className="p-2 rounded transition-colors"
-            style={{
-              backgroundColor: rightPanelVisible ? 'var(--accent)' : 'var(--surface)',
-              border: `1px solid var(--border)`,
-              color: rightPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
-            }}
-            title={rightPanelVisible ? 'Hide Right Panel' : 'Show Right Panel'}
-          >
-            {rightPanelVisible ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
-          </button>
-        )}
-
-        <button
-          onClick={toggleBottomPanel}
-          className="p-2 rounded transition-colors"
-          style={{
-            backgroundColor: bottomPanelVisible ? 'var(--accent)' : 'var(--surface)',
-            border: `1px solid var(--border)`,
-            color: bottomPanelVisible ? 'var(--bg-primary)' : 'var(--text-primary)'
-          }}
-          title={bottomPanelVisible ? 'Hide Bottom Panel' : 'Show Bottom Panel'}
-        >
-          {bottomPanelVisible ? <PanelBottomClose size={14} /> : <PanelBottomOpen size={14} />}
-        </button>
-      </div>
-    </div>
+    <SingleNavigationBar
+      onBack={onBack}
+      currentStrategy={strategy?.name || title}
+      strategies={strategyTabs}
+      onLibraryClick={onLibraryClick}
+      onCompareClick={onCompareClick}
+      className="flex-shrink-0"
+    />
   );
 };
 
-const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBack'>> = ({
+const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBack' | 'onLibraryClick' | 'onCompareClick'>> = ({
   strategy,
   strategies,
   children,
@@ -139,13 +77,29 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
 
       {/* Right Side Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Area: Chart + Right Panel */}
+        {/* Main Chart and Bottom Panel Area */}
         <div className="flex flex-1">
           <div className="flex-1 flex flex-col">
-            {/* Chart Content */}
-            <div className="flex-1 p-4 flex flex-col">
-              {children}
+            {/* Resizable Chart Container - No gaps */}
+            <div className="p-4 pb-0"> {/* Remove bottom padding to eliminate gap */}
+              <ResizableChartContainer
+                defaultHeight={400}
+                minHeight={200}
+                maxHeight={600}
+              >
+                {children}
+              </ResizableChartContainer>
             </div>
+
+            {/* Bottom Panel - Directly below chart with no gap */}
+            {showBottomPanel && bottomPanelVisible && (
+              <div className="px-4"> {/* Only horizontal padding, no vertical gap */}
+                <BottomPanel 
+                  strategy={variant === 'multi' ? strategies?.[0] : strategy}
+                  variant="integrated" // Use integrated variant to avoid extra padding
+                />
+              </div>
+            )}
           </div>
 
           {/* Right Analytics Panel - Only in separate mode */}
@@ -157,27 +111,30 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
             />
           )}
         </div>
-
-        {/* Bottom Panel - Spans width of main content area (excludes sidebar) */}
-        {showBottomPanel && bottomPanelVisible && (
-          <BottomPanel 
-            strategy={variant === 'multi' ? strategies?.[0] : strategy}
-            variant="standalone"
-          />
-        )}
       </div>
     </div>
   );
 };
 
 const StrategyLayout: React.FC<StrategyLayoutProps> = (props) => {
-  const { title, onBack, ...contentProps } = props;
+  const { title, onBack, onLibraryClick, onCompareClick, strategy, strategies, ...contentProps } = props;
 
   return (
     <PanelManagerProvider>
       <div className="flex flex-col min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-        <StrategyLayoutHeader title={title} onBack={onBack} />
-        <StrategyLayoutContent {...contentProps} />
+        <StrategyLayoutHeader 
+          title={title} 
+          onBack={onBack} 
+          onLibraryClick={onLibraryClick}
+          onCompareClick={onCompareClick}
+          strategy={strategy}
+          strategies={strategies}
+        />
+        <StrategyLayoutContent 
+          strategy={strategy}
+          strategies={strategies}
+          {...contentProps} 
+        />
       </div>
     </PanelManagerProvider>
   );
