@@ -57,9 +57,9 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
   const getSavedLayoutMode = (): PanelLayoutMode => {
     try {
       const saved = localStorage.getItem('panelLayoutMode');
-      return (saved === 'combined' || saved === 'separate') ? saved : 'separate';
+      return (saved === 'combined' || saved === 'separate') ? saved : 'combined';
     } catch {
-      return 'separate';
+      return 'combined';
     }
   };
 

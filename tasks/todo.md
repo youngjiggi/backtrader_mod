@@ -1,9 +1,91 @@
-# BackstreetBoys Landing Page Implementation Plan
+# Trade Journal Accordion Enhancement
 
-## Project Overview
-Building a React frontend for the backtesting app "BackstreetBoys" based on the UI_implementation_plan.md specifications.
+## Problem
+The Trade Journal in both StrategyViewScreen and MultiStrategyViewScreen currently shows all trade entries at once, which can be overwhelming for strategies with many trades. We need to implement an accordion pattern showing only the first 10 items by default with the rest hidden in an expandable section.
 
-## Todo Items
+## Plan
+
+### Todo Items
+- [x] Research current TradeJournal component implementation and usage
+- [x] Identify where TradeJournal is used (BottomPanel component)
+- [x] Design accordion pattern for showing first 10 items with expandable section
+- [x] Implement accordion functionality in TradeJournal component
+- [x] Test changes in both single and multi strategy views  
+- [x] Update changelog with the modifications
+
+### Implementation Strategy
+1. **Modify TradeJournal.tsx** to split `filteredTrades` into two arrays:
+   - `visibleTrades`: First 10 trades
+   - `hiddenTrades`: Remaining trades after 10
+
+2. **Add accordion state** using existing CollapsibleSection component pattern:
+   - `showAllTrades` boolean state
+   - Toggle function to expand/collapse additional trades
+
+3. **Update render logic**:
+   - Always show first 10 trades in main table
+   - If more than 10 trades exist, show expandable section
+   - Use existing CollapsibleSection component for consistency
+
+4. **Maintain existing functionality**:
+   - All filtering, sorting, and search features work the same
+   - Summary stats calculate from all trades
+   - Table styling and interactions remain unchanged
+
+### Files to Modify
+- `frontend/src/components/TradeJournal.tsx` - Main implementation
+- `CHANGELOG.md` - Document the enhancement
+
+### Benefits
+- Improved performance with large trade datasets
+- Better UX by reducing initial visual complexity
+- Maintains all existing functionality
+- Uses existing UI patterns for consistency
+
+## Review Section
+
+### ✅ Implementation Completed
+
+**Successfully delivered Trade Journal accordion enhancement with:**
+
+1. **Core Functionality**: 
+   - Shows first 10 trades by default in main table
+   - Additional trades hidden in expandable accordion section
+   - Smooth toggle with chevron icons (up/down) for visual feedback
+
+2. **Performance & UX Improvements**:
+   - Reduced initial render complexity for strategies with 100+ trades
+   - Maintains responsive design and theme compatibility
+   - Preserved all existing table styling and hover interactions
+
+3. **Maintained Features**:
+   - All filtering, sorting, and search functionality works unchanged
+   - Summary statistics calculate from complete dataset (not just visible trades)
+   - Works in both single strategy view and multi-strategy view contexts
+
+### 🎯 Technical Implementation
+
+- **State Management**: Added `showAllTrades` boolean state for accordion control
+- **Data Splitting**: `visibleTrades` (first 10) and `hiddenTrades` (remaining) arrays
+- **Component Refactoring**: Created `renderTradeRow` helper function for DRY code
+- **UI Consistency**: Used existing theme colors and styling patterns
+- **Icon Integration**: Leveraged Lucide React ChevronUp/ChevronDown icons
+
+### 📱 Files Modified
+
+- `frontend/src/components/TradeJournal.tsx` - Main accordion implementation
+- `CHANGELOG.md` - Documented the enhancement
+- `tasks/todo.md` - Project planning and review documentation
+
+### 🚀 Ready for Production
+
+The enhancement is fully functional with the development server running successfully. All TypeScript compilation passes, and the accordion provides a clean, intuitive way to manage large trade datasets while maintaining the existing robust functionality of the Trade Journal component.
+
+---
+
+# Previous Implementation History
+
+## BackstreetBoys Landing Page Implementation Plan
 
 ### Phase 1: Project Setup ✅
 - [x] 1. Create project structure for React frontend

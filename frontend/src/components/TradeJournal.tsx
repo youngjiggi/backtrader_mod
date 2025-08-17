@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownLeft, Filter, Search, Calendar, DollarSign, Clock, Target } from 'lucide-react';
+import { TrendingUp, ArrowUpRight, ArrowDownLeft, Search, Calendar, DollarSign, Clock, Target, ChevronDown, ChevronUp } from 'lucide-react';
 import { RecentRun } from './RecentRunsCarousel';
 
 interface TradeJournalProps {
@@ -33,6 +33,7 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [showAllTrades, setShowAllTrades] = useState(false);
 
   // Combine and process trade data
   const combinedTrades = useMemo(() => {
@@ -138,6 +139,23 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
     return filtered;
   }, [combinedTrades, view, searchTerm, sortField, sortDirection]);
 
+  // Split trades for accordion display
+  const { visibleTrades, hiddenTrades } = useMemo(() => {
+    const INITIAL_DISPLAY_COUNT = 10;
+    
+    if (filteredTrades.length <= INITIAL_DISPLAY_COUNT || showAllTrades) {
+      return {
+        visibleTrades: filteredTrades,
+        hiddenTrades: []
+      };
+    }
+    
+    return {
+      visibleTrades: filteredTrades.slice(0, INITIAL_DISPLAY_COUNT),
+      hiddenTrades: filteredTrades.slice(INITIAL_DISPLAY_COUNT)
+    };
+  }, [filteredTrades, showAllTrades]);
+
   // Calculate summary stats
   const summaryStats = useMemo(() => {
     const entries = combinedTrades.filter(t => t.type === 'entry');
@@ -205,6 +223,66 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
   const getPnlColor = (pnl: number) => {
     return pnl >= 0 ? 'text-green-500' : 'text-red-500';
   };
+
+  const renderTradeRow = (trade: CombinedTrade, index: number) => (
+    <tr
+      key={trade.id}
+      className={`border-t transition-colors hover:bg-opacity-50 ${
+        index % 2 === 0 ? '' : 'bg-opacity-30'
+      }`}
+      style={{
+        borderColor: 'var(--border)',
+        backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-primary)'
+      }}
+    >
+      <td className="px-4 py-3">
+        <div className="flex items-center space-x-2">
+          {getTradeIcon(trade)}
+          <span className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
+            {trade.type} {trade.tradeType}
+          </span>
+        </div>
+      </td>
+      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+        {formatDate(trade.date)}
+      </td>
+      <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+        {formatCurrency(trade.price)}
+      </td>
+      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+        {trade.size.toLocaleString()}
+      </td>
+      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        {trade.signal}
+      </td>
+      <td className="px-4 py-3 text-sm">
+        {trade.type === 'exit' && trade.pnl !== undefined ? (
+          <div className="flex flex-col">
+            <span className={`font-medium ${getPnlColor(trade.pnl)}`}>
+              {formatCurrency(trade.pnl)}
+            </span>
+            {trade.pnlPercent && (
+              <span className={`text-xs ${getPnlColor(trade.pnl)}`}>
+                ({trade.pnlPercent >= 0 ? '+' : ''}{trade.pnlPercent.toFixed(2)}%)
+              </span>
+            )}
+          </div>
+        ) : trade.type === 'open' && trade.unrealizedPnl !== undefined ? (
+          <span className={`font-medium ${getPnlColor(trade.unrealizedPnl)}`}>
+            {formatCurrency(trade.unrealizedPnl)}
+          </span>
+        ) : (
+          <span style={{ color: 'var(--text-secondary)' }}>-</span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
+        {trade.holdTime || '-'}
+      </td>
+      <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
+        {trade.reason}
+      </td>
+    </tr>
+  );
 
   return (
     <div className={`space-y-4 ${className}`}>
@@ -393,65 +471,7 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
         <div className="h-full overflow-y-auto overflow-x-auto">
           <table className="w-full">
             <tbody>
-              {filteredTrades.map((trade, index) => (
-                <tr
-                  key={trade.id}
-                  className={`border-t transition-colors hover:bg-opacity-50 ${
-                    index % 2 === 0 ? '' : 'bg-opacity-30'
-                  }`}
-                  style={{
-                    borderColor: 'var(--border)',
-                    backgroundColor: index % 2 === 0 ? 'transparent' : 'var(--bg-primary)'
-                  }}
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center space-x-2">
-                      {getTradeIcon(trade)}
-                      <span className="text-sm font-medium capitalize" style={{ color: 'var(--text-primary)' }}>
-                        {trade.type} {trade.tradeType}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {formatDate(trade.date)}
-                  </td>
-                  <td className="px-4 py-3 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                    {formatCurrency(trade.price)}
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {trade.size.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {trade.signal}
-                  </td>
-                  <td className="px-4 py-3 text-sm">
-                    {trade.type === 'exit' && trade.pnl !== undefined ? (
-                      <div className="flex flex-col">
-                        <span className={`font-medium ${getPnlColor(trade.pnl)}`}>
-                          {formatCurrency(trade.pnl)}
-                        </span>
-                        {trade.pnlPercent && (
-                          <span className={`text-xs ${getPnlColor(trade.pnl)}`}>
-                            ({trade.pnlPercent >= 0 ? '+' : ''}{trade.pnlPercent.toFixed(2)}%)
-                          </span>
-                        )}
-                      </div>
-                    ) : trade.type === 'open' && trade.unrealizedPnl !== undefined ? (
-                      <span className={`font-medium ${getPnlColor(trade.unrealizedPnl)}`}>
-                        {formatCurrency(trade.unrealizedPnl)}
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--text-secondary)' }}>-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-primary)' }}>
-                    {trade.holdTime || '-'}
-                  </td>
-                  <td className="px-4 py-3 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {trade.reason}
-                  </td>
-                </tr>
-              ))}
+              {visibleTrades.map((trade, index) => renderTradeRow(trade, index))}
             </tbody>
           </table>
           
@@ -464,6 +484,44 @@ const TradeJournal: React.FC<TradeJournalProps> = ({ strategy, className = '' })
           )}
         </div>
       </div>
+
+      {/* Additional Trades Accordion */}
+      {hiddenTrades.length > 0 && (
+        <div
+          className="border rounded-lg overflow-hidden"
+          style={{
+            backgroundColor: 'var(--surface)',
+            borderColor: 'var(--border)'
+          }}
+        >
+          <button
+            onClick={() => setShowAllTrades(!showAllTrades)}
+            className="w-full px-4 py-3 flex items-center justify-between hover:bg-opacity-80 transition-colors"
+            style={{ backgroundColor: 'var(--surface)' }}
+          >
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                Show {hiddenTrades.length} more trades
+              </span>
+            </div>
+            {showAllTrades ? (
+              <ChevronUp size={16} style={{ color: 'var(--text-secondary)' }} />
+            ) : (
+              <ChevronDown size={16} style={{ color: 'var(--text-secondary)' }} />
+            )}
+          </button>
+          
+          {showAllTrades && (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <tbody>
+                  {hiddenTrades.map((trade, index) => renderTradeRow(trade, index + visibleTrades.length))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

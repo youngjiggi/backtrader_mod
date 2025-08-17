@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Trade Journal Accordion Enhancement** - Improved performance and UX for large trade datasets
+  - Trade journal now shows only first 10 trades by default in main table
+  - Additional trades displayed in expandable accordion section with "Show X more trades" button
+  - Accordion uses chevron icons (up/down) to indicate expand/collapse state
+  - All existing functionality maintained: filtering, sorting, search, and summary statistics
+  - Performance improvement for strategies with many trades (100+ entries)
+  - Consistent styling with existing table design and theme colors
+  - Applied to both single strategy view and multi-strategy view through BottomPanel component
+- **Panel Layout Default Changed** - Combined mode now default for better UX
+  - Changed default panel layout from 'separate' to 'combined' mode
+  - Affects both single strategy view and multi-strategy view screens
+  - Combined mode provides cleaner interface with expanded left panel and hidden right panel
+  - Users can still toggle to separate mode if preferred
+  - Setting persists in localStorage for individual user preference
 - **User Profile System** - Complete user account management system
   - User Context for state management with TypeScript interfaces
   - UserProfileScreen with avatar display, inline name editing, and user statistics
