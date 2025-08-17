@@ -26,6 +26,72 @@ const defaultTabs: TabItem[] = [
   { id: 'history', label: 'History', icon: Calendar }
 ];
 
+// Reusable AccordionTab component for single accordion per tab
+interface AccordionTabProps {
+  title: string;
+  isExpanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+  icon?: React.ComponentType<{ size?: number }>;
+}
+
+const AccordionTab: React.FC<AccordionTabProps> = ({
+  title,
+  isExpanded,
+  onToggle,
+  children,
+  icon: Icon
+}) => {
+  return (
+    <div className="w-full">
+      {/* Accordion Header - Clickable */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-3 text-left transition-colors hover:bg-opacity-80 border-b"
+        style={{
+          backgroundColor: isExpanded ? 'var(--bg-primary)' : 'transparent',
+          borderColor: 'var(--border)'
+        }}
+      >
+        <div className="flex items-center space-x-3">
+          {Icon && (
+            <div style={{ color: 'var(--accent)' }}>
+              <Icon size={18} />
+            </div>
+          )}
+          <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+            {title}
+          </h3>
+        </div>
+        
+        {/* Chevron Icon */}
+        <div 
+          className="transition-transform duration-200"
+          style={{ 
+            transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+            color: 'var(--text-secondary)'
+          }}
+        >
+          <ChevronDown size={20} />
+        </div>
+      </button>
+      
+      {/* Accordion Content - Collapsible */}
+      <div 
+        className="transition-all duration-300 ease-in-out overflow-hidden"
+        style={{
+          maxHeight: isExpanded ? '2000px' : '0px', // Large enough for any content
+          opacity: isExpanded ? 1 : 0
+        }}
+      >
+        <div className="p-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SidebarPanel: React.FC<SidebarPanelProps> = ({
   strategy,
   renderTabContent,
@@ -34,8 +100,65 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
   sataScore = 8.2
 }) => {
   const { leftPanelWidth, leftPanelVisible, setLeftPanelWidth, layoutMode, dashboardSettings, updateDashboardSetting } = usePanelManager();
-  const [activeTab, setActiveTab] = useState('portfolio');
   const [combinedMode, setCombinedMode] = useState<'configuration' | 'dashboard'>('configuration');
+  
+  // Accordion state management for each tab
+  const [tabAccordionStates, setTabAccordionStates] = useState<Record<string, boolean>>({
+    portfolio: true,    // Portfolio expanded by default
+    stage: false,       // All others collapsed by default
+    indicators: false,
+    signals: false,
+    signalhierarchy: false,
+    rules: false,
+    performance: false,
+    'dashboard-settings': false,
+    settings: false,
+    history: false
+  });
+
+  // Load accordion states from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('sidebarTabAccordionStates');
+      if (saved) {
+        const savedStates = JSON.parse(saved);
+        setTabAccordionStates(prevStates => ({ ...prevStates, ...savedStates }));
+      }
+    } catch (error) {
+      console.warn('Failed to load tab accordion states:', error);
+    }
+  }, []);
+
+  // Save accordion states to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebarTabAccordionStates', JSON.stringify(tabAccordionStates));
+    } catch (error) {
+      console.warn('Failed to save tab accordion states:', error);
+    }
+  }, [tabAccordionStates]);
+
+  // Toggle accordion for a specific tab
+  const toggleTabAccordion = (tabId: string) => {
+    setTabAccordionStates(prev => {
+      const newStates = { ...prev };
+      
+      // Tesla optimization: only one accordion open at a time on small screens
+      if (window.innerWidth <= 1200) {
+        // Close all accordions first
+        Object.keys(newStates).forEach(key => {
+          newStates[key] = false;
+        });
+        // Open clicked accordion if it was closed
+        newStates[tabId] = !prev[tabId];
+      } else {
+        // Desktop: allow multiple accordions open
+        newStates[tabId] = !prev[tabId];
+      }
+      
+      return newStates;
+    });
+  };
   
   // Portfolio state management
   const [watchlistInput, setWatchlistInput] = useState('');
@@ -359,14 +482,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
       case 'portfolio':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                Portfolio Configuration
-              </h3>
-              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Define the assets you want to trade and manage your portfolio allocation.
-              </p>
-            </div>
 
             {/* Buy Watchlist */}
             <div>
@@ -703,16 +818,13 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+            </div>
         );
       
       case 'stage':
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                Stage & SATA Configuration
-              </h3>
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                 Configure Weinstein stage detection and SATA score calculation parameters.
               </p>
@@ -994,9 +1106,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
       case 'signals':
         return (
           <div className="space-y-4">
-            <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-              Active Signals & Recommendations
-            </h3>
             
             {/* Current Stage */}
             <div className="mb-4">
@@ -1060,14 +1169,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
       case 'indicators':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                Technical Indicators Configuration
-              </h3>
-              <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                Configure all technical indicators used in your trading strategy.
-              </p>
-            </div>
 
             {/* Trend Indicators */}
             <div className="space-y-3">
@@ -1403,9 +1504,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
       case 'rules':
         return (
           <div className="space-y-4">
-            <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-              Trading Rules
-            </h3>
             <div className="space-y-3">
               <div className="p-3 rounded-lg border" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border)' }}>
                 <div className="text-sm font-medium mb-2" style={{ color: 'var(--text-primary)' }}>Entry Conditions</div>
@@ -1442,9 +1540,6 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
-                Signal Hierarchy & Conditional Rules
-              </h3>
               <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                 Configure indicator hierarchies and conditional rules for entry/exit signals.
               </p>
@@ -1869,25 +1964,64 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
         </button>
       </div>
       
-      {combinedMode === 'configuration' && (
-        <TabNavigation
-          tabs={defaultTabs}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          orientation="vertical"
-        />
-      )}
     </div>
   );
 
-  const renderSeparateModeHeader = () => (
-    <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--border)' }}>
-      <TabNavigation
-        tabs={defaultTabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        orientation="vertical"
-      />
+
+  // Render inline accordion menu for configuration
+  const renderInlineAccordionMenu = () => (
+    <div className="flex-1 overflow-auto">
+      <div className="space-y-1 p-4">
+        {defaultTabs.map((tab) => {
+          const Icon = tab.icon;
+          const isExpanded = tabAccordionStates[tab.id];
+          
+          return (
+            <div key={tab.id} className="w-full">
+              {/* Accordion Header */}
+              <button
+                onClick={() => toggleTabAccordion(tab.id)}
+                className="w-full flex items-center justify-between p-3 text-left transition-colors hover:bg-opacity-80 border-b"
+                style={{ 
+                  borderColor: 'var(--border)',
+                  backgroundColor: isExpanded ? 'rgba(59, 130, 246, 0.1)' : 'transparent'
+                }}
+              >
+                <div className="flex items-center space-x-3">
+                  <div style={{ color: 'var(--accent)' }}>
+                    <Icon size={18} />
+                  </div>
+                  <h3 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    {tab.label}
+                  </h3>
+                </div>
+                <div 
+                  className="transition-transform duration-200" 
+                  style={{ 
+                    transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)', 
+                    color: 'var(--text-secondary)' 
+                  }}
+                >
+                  <ChevronDown size={20} />
+                </div>
+              </button>
+              
+              {/* Accordion Content */}
+              <div 
+                className="transition-all duration-300 ease-in-out overflow-hidden" 
+                style={{ 
+                  maxHeight: isExpanded ? '2000px' : '0px', 
+                  opacity: isExpanded ? 1 : 0 
+                }}
+              >
+                <div className="p-4">
+                  {defaultTabContent(tab.id, strategy)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 
@@ -1905,18 +2039,10 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
           </div>
         );
       } else {
-        return (
-          <div className="flex-1 p-4">
-            {renderTabContent ? renderTabContent(activeTab, strategy) : defaultTabContent(activeTab, strategy)}
-          </div>
-        );
+        return renderInlineAccordionMenu();
       }
     } else {
-      return (
-        <div className="flex-1 p-4">
-          {renderTabContent ? renderTabContent(activeTab, strategy) : defaultTabContent(activeTab, strategy)}
-        </div>
-      );
+      return renderInlineAccordionMenu();
     }
   };
 
@@ -1962,8 +2088,8 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
         onResize={setLeftPanelWidth}
         className={`sidebar-panel ${className}`}
       >
-      {/* Header: Combined mode toggle or regular tabs */}
-      {layoutMode === 'combined' ? renderCombinedModeToggle() : renderSeparateModeHeader()}
+      {/* Header: Combined mode toggle */}
+      {layoutMode === 'combined' && renderCombinedModeToggle()}
 
       {/* Content */}
       {renderContent()}
