@@ -41,7 +41,10 @@
       "Bash(claude mcp:*)",
       "Bash(task-master init:*)",
       "Bash(npx task-master-ai:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(npx task-master:*)",
+      "Bash(timeout:*)",
+      "Bash(claude doctor)"
     ],
     "deny": []
   }

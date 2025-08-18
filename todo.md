@@ -40,3 +40,41 @@
 - Accordion UI is working correctly for sidebar
 - Focus now on header consolidation and tab functionality
 - Tesla screen optimization is already implemented in accordion system
+
+## 📅 2025-08-18 - Dashboard Header Redesign
+
+### 🎯 Dashboard Minimal Header Implementation
+- [ ] **Create DashboardHamburgerMenu component**
+  - Add Favorites section for quick access to starred items
+  - Include Account & Settings section (Profile, Account Settings, Trading Preferences, etc.)
+  - Add Theme toggle within menu
+  - Include Sign Out functionality
+  - Optimize for Tesla/car usage with large touch targets
+
+- [ ] **Implement Favorites System**
+  - Create FavoritesContext for state management
+  - Add bookmark/unbookmark functionality throughout app
+  - Create "Add to Favorites" action for any screen
+  - Store favorites in localStorage with user preferences
+  - Support favorites for strategies, reports, comparisons, portfolios
+
+- [ ] **Create Minimal Dashboard Header**
+  - Replace current Header component with minimal design
+  - Layout: [☰] [Backstreet Betas] [Beta]
+  - Remove separate Theme, Settings, Profile buttons
+  - Add hamburger menu button on left
+  - Keep brand name and Beta badge only
+
+- [ ] **Update Dashboard Component**
+  - Replace Header usage with new minimal header
+  - Add hamburger menu state management
+  - Connect favorites to existing navigation functions
+  - Ensure all current functionality is preserved
+  - Test automotive/mobile UX
+
+### 🎯 Goals
+- Consistent header design across app (matches strategy view)
+- Tesla/car-optimized quick access via favorites
+- Personalized user experience with bookmarked screens
+- Reduced navigation steps for power users
+- Clean, minimal dashboard interface

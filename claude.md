@@ -147,3 +147,6 @@ The project is actively developing the frontend user interface with emphasis on:
 - Trading preferences and settings
 - Mock data visualization and backtesting results display
 
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md

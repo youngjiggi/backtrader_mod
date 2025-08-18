@@ -5,6 +5,7 @@ import StrategyViewScreen from './StrategyViewScreen';
 import MultiStrategyViewScreen from './MultiStrategyViewScreen';
 import ComparisonViewContainer from './ComparisonViewContainer';
 import SingleNavigationBar from './SingleNavigationBar';
+import { PanelManagerProvider } from './PanelManager';
 import { RecentRun } from './RecentRunsCarousel';
 import { generateMockStageData } from '../utils/mockStageData';
 
@@ -396,8 +397,22 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
   }, []);
 
   const handleToggleComparisonView = useCallback(() => {
-    setUseComparisonView(!useComparisonView);
-  }, [useComparisonView]);
+    if (!useComparisonView) {
+      // Enable comparison view and populate with current strategy tabs
+      const strategyTabs = tabs.filter(tab => tab.type === 'strategy' && tab.data);
+      if (strategyTabs.length >= 2) {
+        const strategies = strategyTabs.map(tab => tab.data!).slice(0, 4); // Limit to 4 strategies
+        setComparisonStrategies(strategies);
+        setUseComparisonView(true);
+      } else {
+        console.warn('Need at least 2 strategy tabs open for comparison');
+      }
+    } else {
+      // Disable comparison view
+      setUseComparisonView(false);
+      setComparisonStrategies([]);
+    }
+  }, [useComparisonView, tabs]);
 
   const handleCloseTab = useCallback((tabId: string, e?: React.MouseEvent) => {
     if (e) {
@@ -451,7 +466,8 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
   );
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+    <PanelManagerProvider>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Single Minimal Header */}
       <div
         className="border-b"
@@ -471,7 +487,13 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
           activeStrategyId={activeTabId}
           onStrategySelect={(strategyId) => setActiveTabId(strategyId)}
           onStrategyClose={(strategyId) => handleCloseTab(strategyId)}
-          onLibraryClick={() => setActiveTabId('library')}
+          onLibraryClick={() => {
+            setActiveTabId('library');
+            setUseComparisonView(false);
+            setComparisonStrategies([]);
+            setUseMultiStrategyView(false);
+            setMultiStrategyViewStrategies([]);
+          }}
           onCompareClick={handleToggleComparisonView}
           onBack={onBack}
         />
@@ -540,6 +562,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
         )}
       </div>
     </div>
+    </PanelManagerProvider>
   );
 };
 

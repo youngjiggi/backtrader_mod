@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Header from './Header';
+import MinimalDashboardHeader from './MinimalDashboardHeader';
 import CollapsibleSection from './CollapsibleSection';
 import NewBacktestModal from './NewBacktestModal';
 import InlineEditableTitle from './InlineEditableTitle';
@@ -460,7 +460,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-      <Header onSignInClick={onNavigateToSignIn} onSettingsClick={onNavigateToSettings} onProfileClick={onNavigateToProfile} />
+      <MinimalDashboardHeader 
+        onProfileClick={onNavigateToProfile}
+        onAccountSettingsClick={onNavigateToSettings}
+        onTradingPreferencesClick={onNavigateToSettings}
+        onNotificationSettingsClick={onNavigateToSettings}
+        onDataSettingsClick={onNavigateToSettings}
+        onDisplaySettingsClick={onNavigateToSettings}
+        onSignOut={onNavigateToSignIn}
+        onFavoriteClick={(favoritePath) => {
+          // Handle favorite navigation - could be enhanced to parse paths
+          console.log('Navigate to favorite:', favoritePath);
+        }}
+      />
       
       {/* Hero Section */}
       <section className="relative h-96 overflow-hidden">

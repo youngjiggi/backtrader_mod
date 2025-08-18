@@ -8,6 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **3-Panel Dashboard Hamburger Menu** (2025-08-18 18:45 PST) - Complete transformation to full-screen layout
+  - **Layout Revolution:** Converted modal-style hamburger menu to full-screen 3-panel layout (15% | 35% | 50%)
+  - **Left Panel (15%):** Navigation tabs only - Profile, Favorites, Account, Trading, Display
+  - **Middle Panel (35%):** All interactive controls - buttons, toggles, dropdowns, sliders, inputs
+  - **Right Panel (50%):** Pure content display - images, records, notifications, charts, status info
+  - **Automotive Optimized:** Large touch targets, clear visual separation for Tesla Model 3/Y screens
+  - **Mobile Friendly:** No compressed modal, full-screen real estate utilization
+  - **Future Ready:** Notifications and Data tabs documented for post-MVP development
+  - **User Experience:** Clear interaction model - interact left, view right, navigate far-left
+  - **New Components:** DashboardHamburgerMenu.tsx, MinimalDashboardHeader.tsx, FavoritesContext.tsx
+- **Favorites Management System** (2025-08-18 18:45 PST) - Comprehensive bookmarking and quick access
+  - **FavoritesContext:** Full state management for user favorites with localStorage persistence
+  - **Cross-App Integration:** Added FavoritesProvider to App.tsx context hierarchy
+  - **Dashboard Integration:** MinimalDashboardHeader replaces traditional Header component
+  - **User Experience:** Quick access to frequently used strategies, reports, and screens
+
+### Fixed
+- **Toggle Visibility in Light Mode** (2025-08-18 19:15 PST) - Enhanced toggle button visibility and functionality
+  - **Light Mode Toggle Fix:** Added black borders to white toggle circles for proper visibility in light mode
+  - **Consistent Toggle Behavior:** Dark/light mode toggle now uses gray background when off, matching other toggles
+  - **Functional Show Volume Toggle:** Made show volume toggle operable with proper state management and visual feedback
+- **Touch-Screen Portfolio Controls** (2025-08-18 19:15 PST) - Automotive-optimized portfolio size selection
+  - **Preset Amount Buttons:** Replaced number input with touch-friendly preset buttons ($10K-$500K)
+  - **48px Touch Targets:** All interactive elements meet automotive touch screen standards
+  - **Step Controls:** Added +/-$5K fine-tuning buttons for precise adjustments
+  - **Visual Selection Feedback:** Selected amounts highlighted in blue with clear K/M formatting
+  - **Automotive Usability:** Eliminated keyboard input requirements for Tesla Model 3/Y compatibility
 - **Inline Accordion Configuration System** - Tesla-optimized sidebar with direct inline expansion
   - Converted SidebarPanel from tab-based to inline accordion system for better space utilization
   - Each configuration section (Portfolio, Stage & SATA, Indicators, etc.) expands directly in menu

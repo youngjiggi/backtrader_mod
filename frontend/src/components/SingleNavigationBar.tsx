@@ -13,6 +13,7 @@ interface SingleNavigationBarProps {
   onBack: () => void;
   currentStrategy?: string;
   strategies?: StrategyTab[];
+  activeStrategyId?: string;
   onStrategySelect?: (strategyId: string) => void;
   onStrategyClose?: (strategyId: string) => void;
   onLibraryClick?: () => void;
@@ -28,6 +29,7 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
     { id: '2', name: 'Strategy 2', isActive: false },
     { id: '3', name: 'Strategy 3', isActive: false }
   ],
+  activeStrategyId,
   onStrategySelect,
   onStrategyClose,
   onLibraryClick,

@@ -4,6 +4,7 @@ import { FontSizeProvider } from './contexts/FontSizeContext';
 import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
 import { UserProvider } from './contexts/UserContext';
+import { FavoritesProvider } from './contexts/FavoritesContext';
 import { RecentRun } from './components/RecentRunsCarousel';
 import Dashboard from './components/Dashboard';
 import TabbedLibrary from './components/TabbedLibrary';
@@ -347,9 +348,11 @@ function App() {
         <FontSizeProvider>
           <StrategyProvider>
             <WatchlistProvider>
-              <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                {renderCurrentView()}
-              </div>
+              <FavoritesProvider>
+                <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                  {renderCurrentView()}
+                </div>
+              </FavoritesProvider>
             </WatchlistProvider>
           </StrategyProvider>
         </FontSizeProvider>

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Grid, Square, Columns, Rows, PanelLeftClose, PanelRightClose, PanelBottomClose, PanelLeftOpen, PanelRightOpen, PanelBottomOpen, GripVertical, GripHorizontal, Settings, BarChart3, Activity, Target, DollarSign, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { RecentRun } from './RecentRunsCarousel';
 import StrategyChartPane from './StrategyChartPane';
@@ -20,7 +20,15 @@ const ComparisonViewContainer: React.FC<ComparisonViewContainerProps> = ({
   className = ''
 }) => {
   const [activeStrategy, setActiveStrategy] = useState<RecentRun>(strategies[0]);
-  const [layout, setLayout] = useState<ComparisonLayout>('2x1');
+  
+  // Set default layout based on number of strategies
+  const getDefaultLayout = (strategyCount: number): ComparisonLayout => {
+    if (strategyCount >= 3) return '2x2';  // 3+ strategies: use 2x2 grid
+    if (strategyCount === 2) return '2x1'; // 2 strategies: use 2x1 grid
+    return '1x1';                          // 1 strategy: use 1x1 grid
+  };
+  
+  const [layout, setLayout] = useState<ComparisonLayout>(getDefaultLayout(strategies.length));
   const [showLayoutSelector, setShowLayoutSelector] = useState(false);
   
   // Panel state management
@@ -32,6 +40,12 @@ const ComparisonViewContainer: React.FC<ComparisonViewContainerProps> = ({
   const [bottomPanelVisible, setBottomPanelVisible] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(new Set(['performance']));
+
+  // Update layout when strategies array changes
+  useEffect(() => {
+    const newOptimalLayout = getDefaultLayout(strategies.length);
+    setLayout(newOptimalLayout);
+  }, [strategies.length]);
 
   // Resize refs
   const leftResizeRef = useRef<HTMLDivElement>(null);
