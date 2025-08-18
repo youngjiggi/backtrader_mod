@@ -73,6 +73,7 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
   const [splitViewStrategy, setSplitViewStrategy] = useState<RecentRun | null>(null);
   const [activeTabId, setActiveTabId] = useState('library');
   const [tabOverflowMenuOpen, setTabOverflowMenuOpen] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'info' | 'warning' | 'error' } | null>(null);
 
   const MAX_VISIBLE_TABS = 5;
 
@@ -405,7 +406,13 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
         setComparisonStrategies(strategies);
         setUseComparisonView(true);
       } else {
-        console.warn('Need at least 2 strategy tabs open for comparison');
+        // Show user-friendly notification
+        setNotification({
+          message: `Need at least 2 open strategy tabs for comparison. Currently have ${strategyTabs.length}.`,
+          type: 'warning'
+        });
+        // Auto-hide notification after 4 seconds
+        setTimeout(() => setNotification(null), 4000);
       }
     } else {
       // Disable comparison view
@@ -443,6 +450,43 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
     setUseSplitView(false);
     setSplitViewStrategy(null);
   }, []);
+
+  const handleCloneStrategy = useCallback(() => {
+    // Find the currently active strategy tab
+    const activeTab = tabs.find(tab => tab.id === activeTabId && tab.type === 'strategy');
+    
+    if (activeTab && activeTab.data) {
+      // Generate a unique ID for the cloned strategy
+      const clonedId = `${activeTab.id}_clone_${Date.now()}`;
+      
+      // Create cloned strategy data with modified name
+      const clonedData: RecentRun = {
+        ...activeTab.data,
+        id: clonedId,
+        name: `${activeTab.data.name} (Copy)`,
+      };
+      
+      // Create new tab for the cloned strategy
+      const clonedTab: Tab = {
+        id: clonedId,
+        type: 'strategy',
+        title: clonedData.name,
+        data: clonedData
+      };
+      
+      // Add the cloned tab and make it active
+      setTabs(prev => [...prev, clonedTab]);
+      setActiveTabId(clonedId);
+    } else {
+      // Show user-friendly notification
+      setNotification({
+        message: 'No strategy tab is currently open to clone. Please open a strategy first.',
+        type: 'warning'
+      });
+      // Auto-hide notification after 4 seconds
+      setTimeout(() => setNotification(null), 4000);
+    }
+  }, [activeTabId, tabs]);
 
   const truncateTitle = (title: string, maxLength: number = 20) => {
     return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title;
@@ -495,9 +539,38 @@ const TabbedLibrary: React.FC<TabbedLibraryProps> = ({ onBack, onCompareSelected
             setMultiStrategyViewStrategies([]);
           }}
           onCompareClick={handleToggleComparisonView}
+          onCloneStrategy={handleCloneStrategy}
+          onCloseAllStrategies={handleCloseAllStrategyTabs}
           onBack={onBack}
         />
       </div>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div 
+          className="fixed top-20 right-4 z-50 px-4 py-3 rounded-lg shadow-lg border max-w-md animate-slide-in"
+          style={{
+            backgroundColor: notification.type === 'warning' ? '#fef3cd' : 
+                           notification.type === 'error' ? '#f8d7da' : '#d1ecf1',
+            borderColor: notification.type === 'warning' ? '#fdbf47' : 
+                        notification.type === 'error' ? '#f5c6cb' : '#bee5eb',
+            color: notification.type === 'warning' ? '#664d03' : 
+                  notification.type === 'error' ? '#721c24' : '#0c5460',
+          }}
+        >
+          <div className="flex items-center justify-between space-x-3">
+            <div className="text-sm font-medium flex-1">{notification.message}</div>
+            <button
+              onClick={() => setNotification(null)}
+              className="text-lg leading-none hover:opacity-70 flex-shrink-0 ml-2"
+              style={{ color: 'inherit' }}
+              title="Close notification"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="flex-1">

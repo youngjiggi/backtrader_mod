@@ -18,6 +18,8 @@ interface SingleNavigationBarProps {
   onStrategyClose?: (strategyId: string) => void;
   onLibraryClick?: () => void;
   onCompareClick?: () => void;
+  onCloneStrategy?: () => void;
+  onCloseAllStrategies?: () => void;
   className?: string;
 }
 
@@ -34,6 +36,8 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
   onStrategyClose,
   onLibraryClick,
   onCompareClick,
+  onCloneStrategy,
+  onCloseAllStrategies,
   className = ''
 }) => {
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
@@ -176,6 +180,14 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
           }}
           onCompareClick={() => {
             onCompareClick?.();
+            setHamburgerOpen(false);
+          }}
+          onCloneStrategy={() => {
+            onCloneStrategy?.();
+            setHamburgerOpen(false);
+          }}
+          onCloseAllStrategies={() => {
+            onCloseAllStrategies?.();
             setHamburgerOpen(false);
           }}
         />

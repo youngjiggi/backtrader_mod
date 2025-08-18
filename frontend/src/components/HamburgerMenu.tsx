@@ -6,13 +6,17 @@ interface HamburgerMenuProps {
   onBack: () => void;
   onLibraryClick?: () => void;
   onCompareClick?: () => void;
+  onCloneStrategy?: () => void;
+  onCloseAllStrategies?: () => void;
 }
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onClose,
   onBack,
   onLibraryClick,
-  onCompareClick
+  onCompareClick,
+  onCloneStrategy,
+  onCloseAllStrategies
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -66,8 +70,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           icon: <Copy size={18} />,
           label: 'Clone Strategy',
           onClick: () => {
-            // TODO: Implement clone functionality
-            console.log('Clone strategy');
+            onCloneStrategy?.();
             onClose();
           },
           description: 'Create a copy of current strategy'
@@ -76,8 +79,7 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
           icon: <Trash2 size={18} />,
           label: 'Close All Strategies',
           onClick: () => {
-            // TODO: Implement close all functionality
-            console.log('Close all strategies');
+            onCloseAllStrategies?.();
             onClose();
           },
           description: 'Close all open strategy tabs'
