@@ -637,47 +637,19 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
     <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       {/* Controls */}
       <div className="px-6 pt-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Backtest Library
-          </h2>
-          <ViewToggle view={view} onViewChange={setView} />
-        </div>
+        <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--text-primary)' }}>
+          Backtest Library
+        </h2>
       </div>
 
       <div className="px-6 pb-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4 mb-6">
-          {/* Search */}
-          <div className="relative flex-1 max-w-md">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2"
-              size={20}
-              style={{ color: 'var(--text-secondary)' }}
-            />
-            <input
-              type="text"
-              placeholder="Search strategies, symbols, keynotes..."
-              value={searchTerm}
-              onChange={(e) => {
-                console.log('Search input changed to:', e.target.value);
-                setSearchTerm(e.target.value);
-              }}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 transition-colors"
-              style={{
-                backgroundColor: 'var(--surface)',
-                borderColor: 'var(--border)',
-                color: 'var(--text-primary)',
-                '--tw-ring-color': 'var(--accent)'
-              }}
-            />
-          </div>
-
-          {/* Filters */}
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+          {/* Filters and Timeframe - Tesla optimized left positioning */}
           <div className="flex items-center space-x-4">
             <select
               value={filterTimeframe}
               onChange={(e) => setFilterTimeframe(e.target.value)}
-              className="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2"
+              className="px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 min-h-[48px]"
               style={{
                 backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)',
@@ -694,7 +666,7 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
 
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="flex items-center space-x-2 px-3 py-2 border rounded-lg transition-colors hover:bg-opacity-80"
+              className="flex items-center space-x-2 px-4 py-3 border rounded-lg transition-colors hover:bg-opacity-80 min-h-[48px]"
               style={{
                 backgroundColor: 'var(--surface)',
                 borderColor: 'var(--border)',
@@ -705,27 +677,45 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
               <span>Filters</span>
             </button>
           </div>
+
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2"
+              size={20}
+              style={{ color: 'var(--text-secondary)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search strategies, symbols, keynotes..."
+              value={searchTerm}
+              onChange={(e) => {
+                console.log('Search input changed to:', e.target.value);
+                setSearchTerm(e.target.value);
+              }}
+              className="w-full pl-10 pr-4 py-3 rounded-lg border focus:outline-none focus:ring-2 transition-colors min-h-[48px]"
+              style={{
+                backgroundColor: 'var(--surface)',
+                borderColor: 'var(--border)',
+                color: 'var(--text-primary)',
+                '--tw-ring-color': 'var(--accent)'
+              }}
+            />
+          </div>
         </div>
 
-        {/* Results Count and Compare Button */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Showing {sortedBacktests.length} of {backtests.length} strategies
-            {searchTerm && (
-              <span style={{ color: 'var(--accent)' }}>
-                {' '}(searching for: "{searchTerm}")
-              </span>
-            )}
-          </p>
-          
-          {selectedItems.length > 0 && (
-            <div className="flex items-center space-x-3">
-              <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                {selectedItems.length} selected
-              </span>
-              
+        {/* Tesla-Optimized: Action Buttons on Left + Results Count */}
+        <div className="flex items-center space-x-4 mb-4">
+          {/* Action Buttons - Tesla Left-Side Positioning */}
+          <div className="flex items-center space-x-3">
+            {/* View Toggle - Always visible, most frequently used */}
+            <ViewToggle view={view} onViewChange={setView} />
+            
+            {/* Selection Action Buttons - Only when items selected */}
+            {selectedItems.length > 0 && (
+              <>
               <button
-                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80"
+                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80 flex items-center whitespace-nowrap"
                 style={{
                   borderColor: 'var(--border)',
                   color: 'var(--text-primary)',
@@ -741,12 +731,12 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
                 }}
                 title="Open all selected strategies in individual tabs"
               >
-                <ExternalLink size={16} style={{ marginRight: '4px' }} />
+                <ExternalLink size={16} className="mr-1" />
                 Open Selected
               </button>
               
               <button
-                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80"
+                className="px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80 flex items-center whitespace-nowrap"
                 style={{
                   borderColor: 'var(--accent)',
                   color: 'var(--accent)',
@@ -762,12 +752,12 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
                 }}
                 title="Open selected strategies in split view (grid layout with shared panels)"
               >
-                <LayoutGrid size={16} style={{ marginRight: '4px' }} />
+                <LayoutGrid size={16} className="mr-1" />
                 Split View
               </button>
               
               <button
-                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                className="px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center whitespace-nowrap"
                 style={{
                   backgroundColor: 'var(--accent)',
                   color: 'var(--bg-primary)'
@@ -784,11 +774,27 @@ const Library: React.FC<LibraryProps> = ({ onCompareSelected, onReportOpen, onOp
                 }}
                 title="Compare selected strategies side by side"
               >
-                <BarChart3 size={16} style={{ marginRight: '4px' }} />
+                <BarChart3 size={16} className="mr-1" />
                 Compare ({selectedItems.length})
               </button>
-            </div>
-          )}
+              </>
+            )}
+          </div>
+
+          {/* Results Count - Moved to right side */}
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Showing {sortedBacktests.length} of {backtests.length} strategies
+            {searchTerm && (
+              <span style={{ color: 'var(--accent)' }}>
+                {' '}(searching for: "{searchTerm}")
+              </span>
+            )}
+            {selectedItems.length > 0 && (
+              <span className="text-sm font-medium ml-2" style={{ color: 'var(--text-primary)' }}>
+                • {selectedItems.length} selected
+              </span>
+            )}
+          </p>
         </div>
 
         {/* Content */}

@@ -8,13 +8,16 @@ interface ViewToggleProps {
 
 const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
   return (
-    <div className="flex items-center space-x-1 border rounded-lg p-1" style={{ borderColor: 'var(--border)' }}>
+    <div className="flex items-center space-x-1">
       <button
         onClick={() => onViewChange('list')}
-        className={`p-2 rounded transition-colors ${view === 'list' ? 'text-white' : ''}`}
+        className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80 flex items-center justify-center ${view === 'list' ? 'text-white' : ''}`}
         style={{
-          backgroundColor: view === 'list' ? 'var(--accent)' : 'transparent',
-          color: view === 'list' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+          borderColor: view === 'list' ? 'var(--accent)' : 'var(--border)',
+          backgroundColor: view === 'list' ? 'var(--accent)' : 'var(--surface)',
+          color: view === 'list' ? 'var(--bg-primary)' : 'var(--text-primary)',
+          minHeight: '36px',
+          height: '36px'
         }}
         title="List View"
       >
@@ -22,10 +25,13 @@ const ViewToggle: React.FC<ViewToggleProps> = ({ view, onViewChange }) => {
       </button>
       <button
         onClick={() => onViewChange('thumbnail')}
-        className={`p-2 rounded transition-colors ${view === 'thumbnail' ? 'text-white' : ''}`}
+        className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors hover:bg-opacity-80 flex items-center justify-center ${view === 'thumbnail' ? 'text-white' : ''}`}
         style={{
-          backgroundColor: view === 'thumbnail' ? 'var(--accent)' : 'transparent',
-          color: view === 'thumbnail' ? 'var(--bg-primary)' : 'var(--text-secondary)'
+          borderColor: view === 'thumbnail' ? 'var(--accent)' : 'var(--border)',
+          backgroundColor: view === 'thumbnail' ? 'var(--accent)' : 'var(--surface)',
+          color: view === 'thumbnail' ? 'var(--bg-primary)' : 'var(--text-primary)',
+          minHeight: '36px',
+          height: '36px'
         }}
         title="Thumbnail View"
       >
