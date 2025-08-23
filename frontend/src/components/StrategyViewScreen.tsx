@@ -5,7 +5,8 @@ import AccountBalanceChart from './AccountBalanceChart';
 import SidebarPanel from './SidebarPanel';
 import BottomPanel from './BottomPanel';
 import ResizableChartContainer from './ResizableChartContainer';
-import { PanelManagerProvider } from './PanelManager';
+import AnalyticsPanel from './AnalyticsPanel';
+import { usePanelManager } from './PanelManager';
 
 interface StrategyViewScreenProps {
   strategy: RecentRun;
@@ -17,6 +18,7 @@ interface StrategyViewScreenProps {
 }
 
 const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ strategy, onBack, onLibraryClick, onCompareClick, onStrategyClose, hideHeader = false }) => {
+  const { layoutMode } = usePanelManager();
 
   const renderChartContent = () => (
     <div className="flex flex-col flex-1">
@@ -32,42 +34,49 @@ const StrategyViewScreen: React.FC<StrategyViewScreenProps> = ({ strategy, onBac
   // If hideHeader is true, render content without StrategyLayout wrapper
   if (hideHeader) {
     return (
-      <PanelManagerProvider>
-        <div className="flex flex-1">
-          {/* Left Sidebar - Matches StrategyLayout structure but without header */}
-          <SidebarPanel 
-            strategy={strategy}
-            activeTimeframe="1D"
-            sataScore={8.2}
-            hideHeader={true}
-          />
-          
-          {/* Right Side Content Area */}
-          <div className="flex-1 flex flex-col">
-            <div className="flex flex-1">
-              <div className="flex-1 flex flex-col">
-                <div className="p-4 pb-0">
-                  <ResizableChartContainer
-                    defaultHeight={400}
-                    minHeight={200}
-                    maxHeight={600}
-                  >
-                    {renderChartContent()}
-                  </ResizableChartContainer>
-                </div>
-                
-                {/* Bottom Panel */}
-                <div className="px-4">
-                  <BottomPanel 
-                    strategy={strategy}
-                    variant="integrated"
-                  />
-                </div>
+      <div className="flex flex-1">
+        {/* Left Sidebar - Matches StrategyLayout structure but without header */}
+        <SidebarPanel 
+          strategy={strategy}
+          activeTimeframe="1D"
+          sataScore={8.2}
+          hideHeader={false}
+        />
+        
+        {/* Right Side Content Area */}
+        <div className="flex-1 flex flex-col">
+          <div className="flex flex-1">
+            <div className="flex-1 flex flex-col">
+              <div className="p-4 pb-0">
+                <ResizableChartContainer
+                  defaultHeight={400}
+                  minHeight={200}
+                  maxHeight={600}
+                >
+                  {renderChartContent()}
+                </ResizableChartContainer>
+              </div>
+              
+              {/* Bottom Panel */}
+              <div className="px-4">
+                <BottomPanel 
+                  strategy={strategy}
+                  variant="integrated"
+                />
               </div>
             </div>
+
+            {/* Right Analytics Panel - Only in separate mode */}
+            {layoutMode === 'separate' && (
+              <AnalyticsPanel 
+                strategy={strategy}
+                variant="single"
+                activeTimeframe="1D"
+              />
+            )}
           </div>
         </div>
-      </PanelManagerProvider>
+      </div>
     );
   }
 

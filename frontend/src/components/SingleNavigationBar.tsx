@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Menu, Library, Layers, MoreVertical, X } from 'lucide-react';
 import HamburgerMenu from './HamburgerMenu';
 import MoreMenu from './MoreMenu';
+import { usePanelManager } from './PanelManager';
 
 interface StrategyTab {
   id: string;
@@ -42,6 +43,9 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
 }) => {
   const [hamburgerOpen, setHamburgerOpen] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  
+  // Use PanelManager for layout mode control
+  const { layoutMode, setLayoutMode } = usePanelManager();
 
   return (
     <>
@@ -190,6 +194,8 @@ const SingleNavigationBar: React.FC<SingleNavigationBarProps> = ({
             onCloseAllStrategies?.();
             setHamburgerOpen(false);
           }}
+          layoutMode={layoutMode}
+          onLayoutModeChange={setLayoutMode}
         />
       )}
     </>

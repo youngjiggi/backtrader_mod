@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
 
 export type PanelLayoutMode = 'separate' | 'combined';
+export type LeftPanelContent = 'configuration' | 'dashboard';
 
 export interface DashboardSettings {
   strategyEvolution: boolean;
@@ -21,6 +22,7 @@ interface PanelState {
   rightPanelVisible: boolean;
   bottomPanelVisible: boolean;
   layoutMode: PanelLayoutMode;
+  leftPanelContent: LeftPanelContent;
   dashboardSettings: DashboardSettings;
 }
 
@@ -36,6 +38,8 @@ interface PanelActions {
   toggleBottomPanel: () => void;
   setLayoutMode: (mode: PanelLayoutMode) => void;
   toggleLayoutMode: () => void;
+  setLeftPanelContent: (content: LeftPanelContent) => void;
+  toggleLeftPanelContent: () => void;
   setDashboardSettings: (settings: DashboardSettings) => void;
   updateDashboardSetting: (key: keyof DashboardSettings, value: boolean) => void;
 }
@@ -60,6 +64,16 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
       return (saved === 'combined' || saved === 'separate') ? saved : 'combined';
     } catch {
       return 'combined';
+    }
+  };
+
+  // Load saved left panel content from localStorage
+  const getSavedLeftPanelContent = (): LeftPanelContent => {
+    try {
+      const saved = localStorage.getItem('leftPanelContent');
+      return (saved === 'configuration' || saved === 'dashboard') ? saved : 'configuration';
+    } catch {
+      return 'configuration';
     }
   };
 
@@ -105,6 +119,7 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
     rightPanelVisible: true,
     bottomPanelVisible: true,
     layoutMode: getSavedLayoutMode(),
+    leftPanelContent: getSavedLeftPanelContent(),
     dashboardSettings: getSavedDashboardSettings(),
     ...initialState
   };
@@ -220,6 +235,27 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
     });
   }, []);
 
+  const setLeftPanelContent = useCallback((content: LeftPanelContent) => {
+    setState(prev => ({ ...prev, leftPanelContent: content }));
+    try {
+      localStorage.setItem('leftPanelContent', content);
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const toggleLeftPanelContent = useCallback(() => {
+    setState(prev => {
+      const newContent = prev.leftPanelContent === 'configuration' ? 'dashboard' : 'configuration';
+      try {
+        localStorage.setItem('leftPanelContent', newContent);
+      } catch {
+        // Ignore localStorage errors
+      }
+      return { ...prev, leftPanelContent: newContent };
+    });
+  }, []);
+
   const setDashboardSettings = useCallback((settings: DashboardSettings) => {
     setState(prev => ({ ...prev, dashboardSettings: settings }));
   }, []);
@@ -247,6 +283,8 @@ export const PanelManagerProvider: React.FC<PanelManagerProviderProps> = ({
     toggleBottomPanel,
     setLayoutMode,
     toggleLayoutMode,
+    setLeftPanelContent,
+    toggleLeftPanelContent,
     setDashboardSettings,
     updateDashboardSetting
   };

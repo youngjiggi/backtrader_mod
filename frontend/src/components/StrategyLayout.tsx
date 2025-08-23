@@ -76,7 +76,7 @@ const StrategyLayoutContent: React.FC<Omit<StrategyLayoutProps, 'title' | 'onBac
         renderTabContent={sidebarContent}
         activeTimeframe={activeTimeframe}
         sataScore={8.2} // TODO: Get from strategy data
-        hideHeader={true} // Hide the combined mode toggle in strategy views
+        hideHeader={false}
       />
 
       {/* Right Side Content Area */}

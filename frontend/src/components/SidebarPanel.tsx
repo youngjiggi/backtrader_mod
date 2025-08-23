@@ -101,8 +101,7 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
   sataScore = 8.2,
   hideHeader = false
 }) => {
-  const { leftPanelWidth, leftPanelVisible, setLeftPanelWidth, layoutMode, dashboardSettings, updateDashboardSetting } = usePanelManager();
-  const [combinedMode, setCombinedMode] = useState<'configuration' | 'dashboard'>('configuration');
+  const { leftPanelWidth, leftPanelVisible, setLeftPanelWidth, layoutMode, leftPanelContent, setLeftPanelContent, dashboardSettings, updateDashboardSetting } = usePanelManager();
   
   // Accordion state management for each tab
   const [tabAccordionStates, setTabAccordionStates] = useState<Record<string, boolean>>({
@@ -1941,24 +1940,24 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
     <div className="flex-shrink-0 p-4 border-b" style={{ borderColor: 'var(--border)' }}>
       <div className="flex items-center space-x-2 mb-4">
         <button
-          onClick={() => setCombinedMode('configuration')}
+          onClick={() => setLeftPanelContent('configuration')}
           className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1`}
           style={{
-            backgroundColor: combinedMode === 'configuration' ? 'var(--accent)' : 'var(--surface)',
-            color: combinedMode === 'configuration' ? 'var(--bg-primary)' : 'var(--text-primary)',
-            border: `1px solid ${combinedMode === 'configuration' ? 'var(--accent)' : 'var(--border)'}`
+            backgroundColor: leftPanelContent === 'configuration' ? 'var(--accent)' : 'var(--surface)',
+            color: leftPanelContent === 'configuration' ? 'var(--bg-primary)' : 'var(--text-primary)',
+            border: `1px solid ${leftPanelContent === 'configuration' ? 'var(--accent)' : 'var(--border)'}`
           }}
         >
           <Cog size={16} />
           <span>Configuration</span>
         </button>
         <button
-          onClick={() => setCombinedMode('dashboard')}
+          onClick={() => setLeftPanelContent('dashboard')}
           className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex-1`}
           style={{
-            backgroundColor: combinedMode === 'dashboard' ? 'var(--accent)' : 'var(--surface)',
-            color: combinedMode === 'dashboard' ? 'var(--bg-primary)' : 'var(--text-primary)',
-            border: `1px solid ${combinedMode === 'dashboard' ? 'var(--accent)' : 'var(--border)'}`
+            backgroundColor: leftPanelContent === 'dashboard' ? 'var(--accent)' : 'var(--surface)',
+            color: leftPanelContent === 'dashboard' ? 'var(--bg-primary)' : 'var(--text-primary)',
+            border: `1px solid ${leftPanelContent === 'dashboard' ? 'var(--accent)' : 'var(--border)'}`
           }}
         >
           <BarChart2 size={16} />
@@ -2029,7 +2028,7 @@ const SidebarPanel: React.FC<SidebarPanelProps> = ({
 
   const renderContent = () => {
     if (layoutMode === 'combined') {
-      if (combinedMode === 'dashboard') {
+      if (leftPanelContent === 'dashboard') {
         return (
           <div className="flex-1 p-4">
             <AnalyticsContent 

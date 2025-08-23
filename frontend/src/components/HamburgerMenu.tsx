@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ArrowLeft, Library, Layers, X, Copy, Trash2 } from 'lucide-react';
+import { ArrowLeft, Library, Layers, X, Copy, Trash2, Layout, BarChart2 } from 'lucide-react';
 
 interface HamburgerMenuProps {
   onClose: () => void;
@@ -8,6 +8,8 @@ interface HamburgerMenuProps {
   onCompareClick?: () => void;
   onCloneStrategy?: () => void;
   onCloseAllStrategies?: () => void;
+  layoutMode?: 'separate' | 'combined';
+  onLayoutModeChange?: (mode: 'separate' | 'combined') => void;
 }
 
 const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
@@ -16,7 +18,9 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
   onLibraryClick,
   onCompareClick,
   onCloneStrategy,
-  onCloseAllStrategies
+  onCloseAllStrategies,
+  layoutMode = 'combined',
+  onLayoutModeChange
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -60,6 +64,31 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
             onClose();
           },
           description: 'Compare multiple strategies'
+        }
+      ]
+    },
+    {
+      title: 'View Settings',
+      items: [
+        {
+          icon: <Layout size={18} />,
+          label: 'Separate Mode',
+          onClick: () => {
+            onLayoutModeChange?.('separate');
+            onClose();
+          },
+          description: 'Independent panels with dedicated content',
+          isSelected: layoutMode === 'separate'
+        },
+        {
+          icon: <BarChart2 size={18} />,
+          label: 'Combined Mode',
+          onClick: () => {
+            onLayoutModeChange?.('combined');
+            onClose();
+          },
+          description: 'Unified left panel with toggle options',
+          isSelected: layoutMode === 'combined'
         }
       ]
     },
@@ -142,28 +171,34 @@ const HamburgerMenu: React.FC<HamburgerMenuProps> = ({
                     onClick={item.onClick}
                     className="w-full flex items-center space-x-3 p-3 rounded-lg transition-colors hover:bg-opacity-80 text-left"
                     style={{
-                      backgroundColor: 'transparent'
+                      backgroundColor: (item as any).isSelected ? 'var(--accent)' : 'transparent'
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                      if (!(item as any).isSelected) {
+                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
+                      if ((item as any).isSelected) {
+                        e.currentTarget.style.backgroundColor = 'var(--accent)';
+                      } else {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }
                     }}
                   >
-                    <div style={{ color: 'var(--accent)' }}>
+                    <div style={{ color: (item as any).isSelected ? 'var(--bg-primary)' : 'var(--accent)' }}>
                       {item.icon}
                     </div>
                     <div className="flex-1">
                       <div 
                         className="font-medium"
-                        style={{ color: 'var(--text-primary)' }}
+                        style={{ color: (item as any).isSelected ? 'var(--bg-primary)' : 'var(--text-primary)' }}
                       >
                         {item.label}
                       </div>
                       <div 
                         className="text-xs"
-                        style={{ color: 'var(--text-secondary)' }}
+                        style={{ color: (item as any).isSelected ? 'var(--bg-primary)' : 'var(--text-secondary)' }}
                       >
                         {item.description}
                       </div>

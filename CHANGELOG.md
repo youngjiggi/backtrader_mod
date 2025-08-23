@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **User Experience:** Quick access to frequently used strategies, reports, and screens
 
 ### Fixed
+- **Panel Mode Context Isolation** (2025-08-23) - Fixed separate/combined mode toggle synchronization issues
+  - **Context Isolation Fix:** Removed nested PanelManagerProvider from StrategyViewScreen.tsx causing state synchronization problems
+  - **Separate Mode Toggle:** Configuration/Dashboard toggle now properly hides when separate mode is selected
+  - **Analytics Panel Display:** Right analytics panel now properly appears in separate mode
+  - **Combined Mode Toggle:** Configuration/Dashboard toggle properly appears and functions in combined mode
+  - **State Propagation:** Layout mode changes now correctly propagate across all components in the context tree
 - **Toggle Visibility in Light Mode** (2025-08-18 19:15 PST) - Enhanced toggle button visibility and functionality
   - **Light Mode Toggle Fix:** Added black borders to white toggle circles for proper visibility in light mode
   - **Consistent Toggle Behavior:** Dark/light mode toggle now uses gray background when off, matching other toggles
