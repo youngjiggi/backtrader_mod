@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **FSD-Optimized Notification System Planning** (2025-08-23) - Complete architecture and task assignment for Tesla FSD screens
+  - **System Architecture:** 3 new major screens (NotificationFeedScreen, DroneReviewModal, FleetManagerScreen) with 70-80% code reuse
+  - **Voice-First Design:** Web Speech API integration, hands-free navigation, and automotive-optimized interactions
+  - **Gesture System:** Swipe-based navigation (left: chat, right: observe, swipe-to-close) with 44px touch targets
+  - **FSD Layout Principles:** 30% control zone, 70% visual zone optimized for Tesla Model 3/Y screens
+  - **Agentic Evolution:** Transform manual backtesting to background scanning → notifications → quick review → execution
+  - **Task Assignment:** Parallel development plan splitting complex integration (Claude Code) and focused implementation (Cursor Chat Agent)
+  - **Backend Separation:** Clear exclusion of real-time data, trading APIs, and drone intelligence for future development
+  - **Documentation:** Complete technical specification and implementation roadmap in /docs
 - **3-Panel Dashboard Hamburger Menu** (2025-08-18 18:45 PST) - Complete transformation to full-screen layout
   - **Layout Revolution:** Converted modal-style hamburger menu to full-screen 3-panel layout (15% | 35% | 50%)
   - **Left Panel (15%):** Navigation tabs only - Profile, Favorites, Account, Trading, Display

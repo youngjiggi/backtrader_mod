@@ -5,6 +5,8 @@ import { StrategyProvider } from './contexts/StrategyContext';
 import { WatchlistProvider } from './contexts/WatchlistContext';
 import { UserProvider } from './contexts/UserContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { VoiceProvider } from './contexts/VoiceContext';
 import { RecentRun } from './components/RecentRunsCarousel';
 import Dashboard from './components/Dashboard';
 import TabbedLibrary from './components/TabbedLibrary';
@@ -21,8 +23,12 @@ import TradingPreferencesScreen from './components/TradingPreferencesScreen';
 import NotificationSettingsScreen from './components/NotificationSettingsScreen';
 import DataSettingsScreen from './components/DataSettingsScreen';
 import DisplaySettingsScreen from './components/DisplaySettingsScreen';
+import NotificationFeedScreen from './components/NotificationFeedScreen';
+import FleetManagerScreen from './components/FleetManagerScreen';
+import DroneReviewModal from './components/DroneReviewModal';
+import { NotificationItem } from './types/agent';
 
-type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'strategy-view' | 'signin' | 'watchlists' | 'settings' | 'profile' | 'account-settings' | 'trading-preferences' | 'notification-settings' | 'data-settings' | 'display-settings';
+type CurrentView = 'dashboard' | 'library' | 'comparison' | 'strategies' | 'report' | 'strategy-view' | 'signin' | 'watchlists' | 'settings' | 'profile' | 'account-settings' | 'trading-preferences' | 'notification-settings' | 'data-settings' | 'display-settings' | 'notification-feed' | 'fleet-manager';
 
 interface BacktestData {
   id: string;
@@ -90,6 +96,8 @@ function App() {
   const [selectedBacktestForReport, setSelectedBacktestForReport] = useState<BacktestReportData | null>(null);
   const [selectedStrategyForView, setSelectedStrategyForView] = useState<RecentRun | null>(null);
   const [librarySearchTerm, setLibrarySearchTerm] = useState<string>('');
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewItem, setReviewItem] = useState<NotificationItem | null>(null);
 
   // Sample data for comparison
   const sampleBacktests: BacktestData[] = [
@@ -175,6 +183,15 @@ function App() {
     setCurrentView('display-settings');
   };
 
+  // FSD navigation handlers
+  const handleNavigateToNotificationFeed = () => {
+    setCurrentView('notification-feed');
+  };
+
+  const handleNavigateToFleetManager = () => {
+    setCurrentView('fleet-manager');
+  };
+
   const renderCurrentView = () => {
     switch (currentView) {
       case 'settings':
@@ -226,6 +243,34 @@ function App() {
         return (
           <DisplaySettingsScreen 
             onBack={() => setCurrentView('settings')}
+          />
+        );
+      case 'notification-feed':
+        return (
+          <NotificationFeedScreen 
+            onBack={() => setCurrentView('dashboard')}
+            onOpenObservation={(notificationId) => {
+              console.log('Opening observation for:', notificationId);
+              // This will trigger DroneReviewModal when implemented
+            }}
+            onOpenObservationItem={(item) => {
+              setReviewItem(item as unknown as NotificationItem);
+              setReviewModalOpen(true);
+            }}
+            onOpenChat={(notificationId) => {
+              console.log('Opening chat for:', notificationId);
+              // This will open mock chat interface
+            }}
+          />
+        );
+      case 'fleet-manager':
+        return (
+          <FleetManagerScreen 
+            onBack={() => setCurrentView('dashboard')}
+            onDeployDrone={(droneConfig) => {
+              console.log('Deploying drone:', droneConfig);
+              // This will handle drone deployment
+            }}
           />
         );
       case 'signin':
@@ -337,6 +382,8 @@ function App() {
             onNavigateToSignIn={handleNavigateToSignIn}
             onNavigateToSettings={handleNavigateToSettings}
             onNavigateToProfile={handleNavigateToProfile}
+            onNavigateToNotificationFeed={handleNavigateToNotificationFeed}
+            onNavigateToFleetManager={handleNavigateToFleetManager}
           />
         );
     }
@@ -349,9 +396,30 @@ function App() {
           <StrategyProvider>
             <WatchlistProvider>
               <FavoritesProvider>
-                <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
-                  {renderCurrentView()}
-                </div>
+                <NotificationProvider>
+                  <VoiceProvider>
+                    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+                      {renderCurrentView()}
+                      <DroneReviewModal
+                        isOpen={reviewModalOpen}
+                        item={reviewItem}
+                        onClose={() => setReviewModalOpen(false)}
+                        onExecute={(i) => {
+                          console.log('Execute:', i);
+                          setReviewModalOpen(false);
+                        }}
+                        onDismiss={(i) => {
+                          console.log('Dismiss:', i);
+                          setReviewModalOpen(false);
+                        }}
+                        onSave={(i) => {
+                          console.log('Save for later:', i);
+                          setReviewModalOpen(false);
+                        }}
+                      />
+                    </div>
+                  </VoiceProvider>
+                </NotificationProvider>
               </FavoritesProvider>
             </WatchlistProvider>
           </StrategyProvider>

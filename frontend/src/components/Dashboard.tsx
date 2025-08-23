@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNotifications } from '../contexts/NotificationContext';
 import MinimalDashboardHeader from './MinimalDashboardHeader';
 import CollapsibleSection from './CollapsibleSection';
 import NewBacktestModal from './NewBacktestModal';
@@ -13,7 +14,7 @@ import TestimonialsSection from './TestimonialsSection';
 import BusinessModelSection from './BusinessModelSection';
 import AdditionalResourcesSection from './AdditionalServicesSection';
 import SiteNavigationSection from './SiteNavigationSection';
-import { BarChart3, Library, Plus, X, Clock, Play, Search, List } from 'lucide-react';
+import { BarChart3, Library, Plus, X, Clock, Play, Search, List, Brain, Settings } from 'lucide-react';
 import { generateMockStageData } from '../utils/mockStageData';
 
 interface BacktestReportData {
@@ -67,6 +68,9 @@ interface DashboardProps {
   onNavigateToSignIn?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToProfile?: () => void;
+  // FSD navigation handlers
+  onNavigateToNotificationFeed?: () => void;
+  onNavigateToFleetManager?: () => void;
 }
 
 interface RunningBacktest {
@@ -80,7 +84,8 @@ interface RunningBacktest {
   tags: string[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToStrategyView, onNavigateToSignIn, onNavigateToSettings, onNavigateToProfile }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateToWatchlistManagement, onNavigateToStrategies, onNavigateToReport, onNavigateToStrategyView, onNavigateToSignIn, onNavigateToSettings, onNavigateToProfile, onNavigateToNotificationFeed, onNavigateToFleetManager }) => {
+  const { notifications, drones } = useNotifications();
   const [isNewBacktestModalOpen, setIsNewBacktestModalOpen] = useState(false);
   const [runningBacktests, setRunningBacktests] = useState<RunningBacktest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -531,7 +536,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
             </form>
 
             {/* Primary Action Buttons */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 max-w-6xl mx-auto">
               {/* New Backtest - Primary Action */}
               <button
                 onClick={() => setIsNewBacktestModalOpen(true)}
@@ -597,6 +602,55 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigateToLibrary, onNavigateTo
                   <h3 className="text-lg font-bold mb-2 text-shadow">Manage Lists</h3>
                   <p className="text-sm opacity-90 text-shadow">
                     Organize and manage your symbol lists
+                  </p>
+                </div>
+              </button>
+
+              {/* FSD Mode - Enter Drone Interface */}
+              <button
+                onClick={onNavigateToNotificationFeed}
+                className="group p-6 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-2xl backdrop-blur-lg"
+                style={{
+                  backgroundColor: 'rgba(0, 255, 127, 0.068)',
+                  borderColor: 'rgba(0, 255, 127, 0.255)',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(0, 255, 127, 0.15), inset 0 1px 0 rgba(0, 255, 127, 0.1275)',
+                  background: 'linear-gradient(135deg, rgba(0, 255, 127, 0.102) 0%, rgba(0, 255, 127, 0.034) 100%)'
+                }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3 p-3 rounded-full bg-white bg-opacity-20 group-hover:bg-opacity-30 transition-all backdrop-blur-sm">
+                    <Brain size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2 text-shadow">FSD Mode</h3>
+                  <p className="text-sm opacity-90 text-shadow">
+                    {notifications.filter(n => !n.isRead).length > 0 
+                      ? `${notifications.filter(n => !n.isRead).length} new alerts`
+                      : 'Enter drone interface'
+                    }
+                  </p>
+                </div>
+              </button>
+
+              {/* Fleet Manager - Drone Control */}
+              <button
+                onClick={onNavigateToFleetManager}
+                className="group p-6 rounded-2xl border transition-all duration-300 hover:scale-105 hover:shadow-2xl backdrop-blur-lg"
+                style={{
+                  backgroundColor: 'rgba(255, 165, 0, 0.068)',
+                  borderColor: 'rgba(255, 165, 0, 0.255)',
+                  color: 'white',
+                  boxShadow: '0 8px 32px rgba(255, 165, 0, 0.15), inset 0 1px 0 rgba(255, 165, 0, 0.1275)',
+                  background: 'linear-gradient(135deg, rgba(255, 165, 0, 0.102) 0%, rgba(255, 165, 0, 0.034) 100%)'
+                }}
+              >
+                <div className="flex flex-col items-center text-center">
+                  <div className="mb-3 p-3 rounded-full bg-white bg-opacity-20 group-hover:bg-opacity-30 transition-all backdrop-blur-sm">
+                    <Settings size={24} />
+                  </div>
+                  <h3 className="text-lg font-bold mb-2 text-shadow">Fleet Manager</h3>
+                  <p className="text-sm opacity-90 text-shadow">
+                    {drones.filter(d => d.status === 'active').length} active drones
                   </p>
                 </div>
               </button>
